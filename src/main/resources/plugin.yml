@@ -1,0 +1,24 @@
+name: Discord
+version: ${project.version}
+main: cat.discord.Discord
+commands:
+  dcstart:
+    description: Discord Start.
+    usage: /<command>
+    permission: op
+    permission-message: NOT OP?
+  dcstop:
+    description: Discord Stop.
+    usage: /<command>
+    permission: op
+    permission-message: NOT OP?
+  deldc:
+    description: Delete All Message on Discord.
+    usage: /<command> <channelID>
+    permission: op
+    permission-message: NOT OP?
+  dcmute:
+    description: Discord Message Control.
+    usage: /<command> <0|1>
+    permission: op
+    permission-message: NOT OP?
