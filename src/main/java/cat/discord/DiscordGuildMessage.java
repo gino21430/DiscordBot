@@ -4,10 +4,7 @@ import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.bukkit.Bukkit;
@@ -66,7 +63,7 @@ public class DiscordGuildMessage extends ListenerAdapter {
         if (toDel.size()>=2) {
             ((TextChannel) channel).deleteMessages(toDel).queue();
             MessageBuilder messageBuilder = new MessageBuilder();
-            messageBuilder.append("All messages have been **DELETE**");
+            messageBuilder.append("All messages have been DELETE.");
             channel.sendMessage(messageBuilder.build()).queue();
         }
     }
@@ -88,7 +85,7 @@ public class DiscordGuildMessage extends ListenerAdapter {
         User author = event.getAuthor();                //The user that sent the message
         Message message = event.getMessage();           //The message that was received.
         String msg = message.getContentDisplay();
-
+        TextChannel channel = event.getTextChannel();
         if (event.getAuthor() == null ||
                 event.getAuthor().getId() == null ||
                 jda.getSelfUser().getId() == null ||
@@ -117,10 +114,9 @@ public class DiscordGuildMessage extends ListenerAdapter {
         if (name==null) {
             MessageBuilder messageBuilder = new MessageBuilder();
             messageBuilder.append(author).append(" 您尚未連結Minecraft帳號\n").append("請私訊Bot\"!verify <遊戲名稱>\"以進行連結程序.");
-            Message tmpMsg = messageBuilder.build();
-            event.getChannel().sendMessage(tmpMsg).queue();
+            channel.sendMessage(messageBuilder.build()).queue();
             DeleteMessageDelay(message,5);
-            DeleteMessageDelay(tmpMsg, 10);
+            //sDeleteMessageDelay(channel.getMessageById(channel.getLatestMessageId()).complete(),6);
             return;
         }else {
             Bukkit.broadcastMessage("[Discord]  "+name+" > "+msg);

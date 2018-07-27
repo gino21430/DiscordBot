@@ -32,8 +32,8 @@ public final class Discord extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
         DiscordGuildMessage.StartBot();
         DiscordGuildMessage.MC2DC(":white_check_mark: Server Start!");
-        DCID2UUID = LoadConfig("DCID2UUID");
-        UUID2Name = LoadConfig("UUID2Name");
+        DCID2UUID = LoadConfig("DCID2UUID.yml");
+        UUID2Name = LoadConfig("UUID2Name.yml");
     }
 
     @Override
@@ -41,8 +41,8 @@ public final class Discord extends JavaPlugin implements Listener {
         DiscordGuildMessage.MC2DC(":no_entry: Server Stop!");
         DiscordGuildMessage.StopBot();
         try {
-            DCID2UUID.save("DCID2UUID");
-            UUID2Name.save("UUID2Name");
+            DCID2UUID.save("DCID2UUID.yml");
+            UUID2Name.save("UUID2Name.yml");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,11 +83,19 @@ public final class Discord extends JavaPlugin implements Listener {
 
         switch (args[0].toLowerCase()) {
             case "start":
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    name = player.getName();
+                }
                 cat.discord.DiscordGuildMessage.StartBot();
-                cat.discord.DiscordGuildMessage.MC2DC("DiscordGuildMessage has been turn on by "+name);
+                cat.discord.DiscordGuildMessage.MC2DC("Bot has been turn on by "+name);
                 return true;
             case "stop":
-                cat.discord.DiscordGuildMessage.MC2DC("DiscordGuildMessage has been shutdown by "+name);
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    name = player.getName();
+                }
+                cat.discord.DiscordGuildMessage.MC2DC("Bot has been shutdown by "+name);
                 cat.discord.DiscordGuildMessage.StopBot();
                 return true;
             case "delmsg":
