@@ -13,14 +13,21 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.bukkit.Bukkit;
 
 import javax.security.auth.login.LoginException;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-public class Bot extends ListenerAdapter {
+public class DiscordGuildMessage extends ListenerAdapter {
 
     private static JDA jda;
-    private static String channelID = "470842970434830363"; //1服
-    Boolean DCmute = false;
+    private static String mainChannel = "470842970434830363"; //1服
+    private static String logChannel = "471136766204575756"; //discord log
+
+    static void Log(String msg) {
+        Date date = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat("MM.dd HH:mm:ss zzz");
+        jda.getTextChannelById(logChannel).sendMessage("["+ft.format(date)+"]: "+msg).queue();
+    }
+
     static void StartBot() {
         Discord.Log("Start Bot...");
         try
@@ -28,7 +35,7 @@ public class Bot extends ListenerAdapter {
             String token = "NDcwNzc5MDEwODMwNDM0MzQ0.DjnTIw.owM-NBBxb0ZRWNV4gDU-sIGJSHc";
             jda = new JDABuilder(AccountType.BOT)
                     .setToken(token)           //The token of the account that is logging in.
-                    .addEventListener(new Bot())  //An instance of a class that will handle events.
+                    .addEventListener(new DiscordGuildMessage())  //An instance of a class that will handle events.
                     .buildBlocking();  //There are 2 ways to login, blocking vs async. Blocking guarantees that JDA will be completely loaded.
             MC2DC(":white_check_mark: Bot Start Running!");
         }
@@ -44,7 +51,7 @@ public class Bot extends ListenerAdapter {
     }
 
     static void MC2DC(String msg) {
-        MessageChannel channel = jda.getTextChannelById(channelID);
+        MessageChannel channel = jda.getTextChannelById(mainChannel);
         channel.sendMessage(msg).queue();
     }
 
@@ -64,39 +71,64 @@ public class Bot extends ListenerAdapter {
         }
     }
 
+    private void DeleteMessageDelay(Message message, int seconds) {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(seconds*1000);
+            } catch (InterruptedException ignored){}
+            message.delete().queue();
+        });
+        thread.start();
+    }
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
 
         JDA jda = event.getJDA();                       //JDA, the core of the api.
-        //long responseNumber = event.getResponseNumber();//The amount of discord events that JDA has received since the last reconnect.
-
         User author = event.getAuthor();                //The user that sent the message
-        if (author == jda.getSelfUser())
-            return;
         Message message = event.getMessage();           //The message that was received.
         String msg = message.getContentDisplay();
 
-        TextChannel logChannel = jda.getTextChannelById("471136766204575756");
+        if (event.getAuthor() == null ||
+                event.getAuthor().getId() == null ||
+                jda.getSelfUser().getId() == null ||
+                event.getAuthor().getId().equals(jda.getSelfUser().getId())) return;
 
+        //execute console command
+        /*
         if (event.getTextChannel().getId().equals("470491828400029696")) {
             if (msg.startsWith("!cmd")) {
                 msg = msg.replace("!cmd ","");
-                Discord.Log("this will be execute: "+msg);
-                Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), msg);
-                message.delete().queue();
+                Discord.Log("To be execute: "+msg);
+                Discord.getPlugin().getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), msg);
+                DeleteMessageDelay(message,3);
                 return;
             }else if (msg.startsWith("!mcmute")) {
                 if (msg.endsWith("1")) Discord.MCmute = true;
                 else if (msg.endsWith("0")) Discord.MCmute = false;
-                message.delete().queue();
+                DeleteMessageDelay(message,3);
                 return;
             }
         }
-
-        logChannel.sendMessage("DC received<" + event.getAuthor().getName() + ">: " + msg).queue();
-        if (!Discord.MCmute)
+        */
+        //log
+        jda.getTextChannelById(logChannel).sendMessage("DC received<" + event.getAuthor().getName() + ">: " + msg).queue();
+        String name = Discord.UUID2Name.getString(Discord.DCID2UUID.getString(author.getId()));
+        if (name==null) {
+            MessageBuilder messageBuilder = new MessageBuilder();
+            messageBuilder.append(author).append(" 您尚未連結Minecraft帳號\n").append("請私訊Bot\"!verify <遊戲名稱>\"以進行連結程序.");
+            Message tmpMsg = messageBuilder.build();
+            event.getChannel().sendMessage(tmpMsg).queue();
+            DeleteMessageDelay(message,5);
+            DeleteMessageDelay(tmpMsg, 10);
+            return;
+        }else {
+            Bukkit.broadcastMessage("[Discord]  "+name+" > "+msg);
+        }
+        if (!Discord.getPlugin().DC2MCmute)
             Bukkit.broadcastMessage("§b[Discord] "+author.getName()+"§r > "+msg); //DC2MC
         //"[§c神之子§r] §eLv.§k987§r - §e"+
 
     }
+
 }
