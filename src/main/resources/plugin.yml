@@ -1,9 +1,3 @@
-name: Discord
+name: DiscordServiceBot
 version: ${project.version}
-main: cat.discord.Discord
-commands:
-  discord:
-    description: Discord command.
-    usage: /<command>
-    permission: op
-    permission-message: NOT OP?
+main: me.monica.cat.dsb.DSB
