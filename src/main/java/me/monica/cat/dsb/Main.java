@@ -1,6 +1,5 @@
 package me.monica.cat.dsb;
 
-import jdk.nashorn.internal.scripts.JD;
 import me.monica.cat.dsb.listener.DiscordGuildMessageListener;
 import me.monica.cat.dsb.listener.DiscordPrivateMessageListener;
 import me.monica.cat.dsb.listener.MinecraftMessageListener;
@@ -96,7 +95,7 @@ public final class Main extends JavaPlugin {
         jda.shutdown();
     }
 
-    void loadLinkMap() {
+    private void loadLinkMap() {
         LoadConfig loadConfig = new LoadConfig();
         uuid2dcid = loadConfig.loadConfig("dcid2uuid");
         dcid2uuid = loadConfig.loadConfig("uuid2dcid");
