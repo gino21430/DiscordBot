@@ -10,7 +10,6 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
     @SubscribeEvent
     public void onPrivateMessageReceived(PrivateMessageReceivedEvent e) {
         Message message = e.getMessage();
-        String msg = message.getContentStripped();
         DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
         discordMessageHandler.handlePrivateMessage(message, e.getAuthor());
     }

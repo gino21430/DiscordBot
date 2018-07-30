@@ -8,12 +8,13 @@ import java.io.File;
 import java.io.IOException;
 
 public class LoadConfig {
-    public static FileConfiguration loadConfig(String fileName) {
-        File file = new File(Main.getPlugin().getDataFolder(),fileName+".yml");
-        if(!Main.getPlugin().getDataFolder().exists()){
+
+    public FileConfiguration loadConfig(String fileName) {
+        File file = new File(Main.getPlugin().getDataFolder(), fileName + ".yml");
+        if (!Main.getPlugin().getDataFolder().exists()) {
             if (!Main.getPlugin().getDataFolder().mkdir()) Main.log("Error mkdir");
         }
-        if(!file.exists()) {
+        if (!file.exists()) {
             try {
                 file.createNewFile();
             } catch (IOException e) {
