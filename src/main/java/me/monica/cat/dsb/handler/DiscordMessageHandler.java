@@ -1,6 +1,7 @@
 package me.monica.cat.dsb.handler;
 
 import me.monica.cat.dsb.Main;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
 import org.bukkit.entity.Player;
 
@@ -9,13 +10,13 @@ public class DiscordMessageHandler {
     public boolean dc2mc = true;
 
     public void handleGuildMessage(String msg) {
-        if (dc2mc) Main.getPlugin().ToDiscordMainTextChannel(msg);
+        if (dc2mc) Main.getPlugin().toDiscordMainTextChannel(msg);
     }
     
    
 
     public void handlePrivateMessage(Message message, User author) {
-        String msg = message.getContextStripped();
+        String msg = message.getContentStripped();
         if (!msg.startsWith("!")) return;
         String[] str = msg.split(" ");
         switch (str[0]) {
@@ -37,7 +38,7 @@ public class DiscordMessageHandler {
                     tmpStr += str[i];
                 Player player = Main.getPlugin().getServer().getPlayer(str[2]);
                 if (player!=null)
-                    Main.getPlugin().ToSendMessageToPlayer(tmpStr, author.getName(), player);
+                    Main.getPlugin().toSendMessageToPlayer(tmpStr, author.getName(), player);
         }
     }
     

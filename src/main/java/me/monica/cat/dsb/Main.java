@@ -2,17 +2,24 @@ package me.monica.cat.dsb;
 
 import me.monica.cat.dsb.listener.DiscordPrivateMessageListener;
 import me.monica.cat.dsb.listener.DiscordGuildMessageListener;
+import me.monica.cat.dsb.util.LoadConfig;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.*;
+import net.dv8tion.jda.core.managers.GuildController;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.security.auth.login.LoginException;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public final class Main extends JavaPlugin {
 
@@ -34,7 +41,7 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         // Plugin shutdown logic
         mainText.sendMessage("**Server Stop Running**").queue();
-        StopBot();
+        stopBot();
     }
 
     public static Main getPlugin() {
@@ -54,7 +61,7 @@ public final class Main extends JavaPlugin {
                     .addEventListener(new DiscordGuildMessageListener())
                     .addEventListener(new DiscordPrivateMessageListener())
                     .buildBlocking();
-            ToDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
+            toDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
         }
         catch (LoginException | InterruptedException e)
         {
@@ -63,21 +70,25 @@ public final class Main extends JavaPlugin {
     }
 
     void stopBot() {
-        ToDiscordMainTextChannel(":no_entry: Bot Stop Running!");
+        toDiscordMainTextChannel(":no_entry: Bot Stop Running!");
         jda.shutdown();
         jda = null;
     }
     
     void reload() {
-        Util util = new Util();
         Thread reload = new Thread(()->{
-            LLOCK(uuid2dcid);
-            LLOCK(dcid2uuid);
-            LLCOK(config);
-            uuid2dcid.save("uuid2dcid");
-            dcid2uuid.save("dcid2uuid");
-            config = plugin.getConfig();
-        }).start();
+            synchronized(uuid2dcid) {
+                try {
+                    uuid2dcid.save("uuid2dcid");
+                    dcid2uuid.save("dcid2uuid");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //this.config = Main.getPlugin().getConfig();
+            }
+        });
+        reload.start();
+        CompletableFuture.runAsync(reload);
         
     }
     
@@ -96,7 +107,7 @@ public final class Main extends JavaPlugin {
                 break;
             case "verify":
                 if (sender instanceof Player)
-                    verifyMinecraft(player);
+                    verifyMinecraft((Player) sender);
                 break;
         }
         return true;
@@ -107,9 +118,8 @@ public final class Main extends JavaPlugin {
     }
 
     public void toSendMessageToMultilayers(String msg, Collection<? extends Player> players) {
-        for (Player player : players) {
+        for (Player player : players)
             player.sendMessage(msg);
-        }
     }
 
     public void toSendMessageToPlayer(String msg, String author, Player player) {
@@ -117,12 +127,13 @@ public final class Main extends JavaPlugin {
     }
 
 
-    FileConfiguration dcid2uuid;
-    FileConfiguration uuid2dcid;
-    Map<String,String> verify = new HashMap<>();
+    private final FileConfiguration dcid2uuid = LoadConfig.loadConfig("dcid2uuid");
+    private final FileConfiguration uuid2dcid = LoadConfig.loadConfig("uuid2dcid");
+    private Map<String,String> verify = new HashMap<>();
+    Map<String,String> linkMap = new HashMap<>();
     
     public void verifyStart(TextChannel channel, User author, String minecraftName) {
-        verify.put(str[1],author.getId());
+        verify.put(minecraftName,author.getId());
     }
     
     public void verifyMinecraft(Player player) {
@@ -131,16 +142,16 @@ public final class Main extends JavaPlugin {
         String dcid = verify.get(name);
         if (dcid!=null) {
             linkMap.put(dcid, name);
-            Guild guild = jda.getGuildById(A"quietpond");
+            Guild guild = jda.getGuildById("quietpond");
             GuildController gc = new GuildController(guild);
-            Role playerRole = jda.getRoleById​("roleid");
-            Role opRole = jda.getRoleById​("roleid");
+            Role playerRole = jda.getRoleById("roleid");
+            Role opRole = jda.getRoleById("roleid");
             Member member = guild.getMemberById(dcid);
-            if (player.isOp()) gc.addRolesToMember​(member,opRole);
-            else gc.addRolesToMember​(member,playerRole);
-            player.sendMessage("Linked to "+user.getName());
+            if (player.isOp()) gc.addRolesToMember(member,opRole);
+            else gc.addRolesToMember(member,playerRole);
+            player.sendMessage("Linked to "+member.getUser().getName());
         }else
-            player.sendMessage("You have not link any Discord user.")
+            player.sendMessage("You have not link any Discord user.");
     }
     
     public boolean detectNameChanged(Player player) {
@@ -150,8 +161,9 @@ public final class Main extends JavaPlugin {
         
         if (linkMap.get(dcid)==name) return false;
         
-        linkMap.edit(dcid,name);
+        linkMap.put(dcid,name);
         player.sendMessage("Detecting your name changed!");
+        return true;
     }
     
 }
