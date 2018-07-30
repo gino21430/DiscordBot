@@ -11,8 +11,11 @@ public class DiscordMessageHandler {
     public void handleGuildMessage(String msg) {
         if (dc2mc) Main.getPlugin().ToDiscordMainTextChannel(msg);
     }
+    
+   
 
-    public void handlePrivateMessage(String msg, User author) {
+    public void handlePrivateMessage(Message message, User author) {
+        String msg = message.getContextStripped();
         if (!msg.startsWith("!")) return;
         String[] str = msg.split(" ");
         switch (str[0]) {
@@ -37,4 +40,5 @@ public class DiscordMessageHandler {
                     Main.getPlugin().ToSendMessageToPlayer(tmpStr, author.getName(), player);
         }
     }
+    
 }

@@ -8,11 +8,11 @@ import java.io.File;
 
 public class LoadConfig {
     private FileConfiguration loadConfig(String fileName) {
-        File file = new File(Main.getPlugin().getDataFolder(),fileName);
+        File file = new File(Main.getPlugin().getDataFolder(),fileName+".yml");
         if(!Main.getPlugin().getDataFolder().exists()){
             if (!Main.getPlugin().getDataFolder().mkdir()) Main.Log("Error mkdir");
         }
-        if(!file.exists()) Main.getPlugin().saveResource(fileName, false);
+        if(!file.exists()) file.createNewFile();
         return YamlConfiguration.loadConfiguration(file);
     }
 }
