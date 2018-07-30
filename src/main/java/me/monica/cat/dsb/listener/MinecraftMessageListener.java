@@ -6,6 +6,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class MinecraftMessageListener implements Listener {
+
     @EventHandler
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
         String messsge = e.getMessage();

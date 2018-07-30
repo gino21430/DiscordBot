@@ -11,11 +11,10 @@ public class MinecraftPlayerJoinListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
-        //update offlineLinkMap's name
         Player player = e.getPlayer();
         Main.getPlugin().detectNameChanged(player);
         e.setJoinMessage("Welcome to the Summon's Rift");
         MinecraftMessageHandler minecraftMessageHandler = new MinecraftMessageHandler();
-        minecraftMessageHandler.muteMap.put(player.getUniqueId().toString(), false);
+        minecraftMessageHandler.unmute(player.getUniqueId().toString());
     }
 }

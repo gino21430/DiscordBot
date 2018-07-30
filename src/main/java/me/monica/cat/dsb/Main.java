@@ -1,10 +1,11 @@
 package me.monica.cat.dsb;
 
+import me.monica.cat.dsb.handler.MinecraftMessageHandler;
 import me.monica.cat.dsb.listener.DiscordGuildMessageListener;
 import me.monica.cat.dsb.listener.DiscordPrivateMessageListener;
 import me.monica.cat.dsb.listener.MinecraftMessageListener;
 import me.monica.cat.dsb.listener.MinecraftPlayerJoinListener;
-import me.monica.cat.dsb.util.LoadConfig;
+import me.monica.cat.dsb.util.ConfigUtil;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -19,9 +20,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.security.auth.login.LoginException;
-import java.io.IOException;
+import java.io.File;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 public final class Main extends JavaPlugin {
 
@@ -45,7 +45,7 @@ public final class Main extends JavaPlugin {
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
-        loadLinkMap();
+        loadConfig();
         // Plugin startup logic
         startBot(Bukkit.getConsoleSender());
         mainText.sendMessage("**Server Start Running**").queue();
@@ -69,7 +69,7 @@ public final class Main extends JavaPlugin {
 
         try {
             //1服BOT
-            String token = "NDcwNzc5MDEwODMwNDM0MzQ0.DjnTIw.owM-NBBxb0ZRWNV4gDU-sIGJSHc";
+            String token = getConfig().getString("token");
             jda = new JDABuilder(AccountType.BOT)
                     .setToken(token)
                     .addEventListener(new DiscordGuildMessageListener())
@@ -95,24 +95,15 @@ public final class Main extends JavaPlugin {
         jda.shutdown();
     }
 
-    private void loadLinkMap() {
-        LoadConfig loadConfig = new LoadConfig();
-        uuid2dcid = loadConfig.loadConfig("dcid2uuid");
-        dcid2uuid = loadConfig.loadConfig("uuid2dcid");
+    private void loadConfig() {
+        ConfigUtil configUtil = new ConfigUtil();
+        uuid2dcid = configUtil.loadConfig(new File(getDataFolder(), "dcid2uuid.yml"));
+        dcid2uuid = configUtil.loadConfig(new File(getDataFolder(), "uuid2dcid.yml"));
+        linkMap = configUtil.loadLinkMap(new File(getDataFolder(), "linkedUser.txt"));
     }
 
     private void reload() {
-        Thread reload = new Thread(() -> {
-            try {
-                uuid2dcid.save("uuid2dcid");
-                dcid2uuid.save("dcid2uuid");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        reload.start();
-        CompletableFuture.runAsync(reload);
-
+        reloadConfig();
     }
 
     @Override
@@ -142,6 +133,13 @@ public final class Main extends JavaPlugin {
                 if (args[1] == null) return false;
                 DeleteAllMessages(args[1]);
                 return true;
+            case "mute":
+                if (!(sender instanceof Player)) return false;
+                if (args[1] == null || args[2] == null) return false;
+                boolean bool = false;
+                if (args[2].equals("on")) bool = true;
+                MinecraftMessageHandler mh = new MinecraftMessageHandler();
+                if (args[1].equals("mc2dc") && sender.isOp()) mh.setMc2dc(bool);
             default:
                 return false;
         }
@@ -162,7 +160,7 @@ public final class Main extends JavaPlugin {
 
     private void DeleteAllMessages(String channelID) {
         log("DeleteAllMessages");
-        MessageChannel channel = jda.getTextChannelById(channelID);
+        TextChannel channel = jda.getTextChannelById(channelID);
         while (true) {
             List<Message> toDel = new ArrayList<>();
             int count = 0;
@@ -173,7 +171,7 @@ public final class Main extends JavaPlugin {
                 //Discord.Log("To delete message: "+msg.getContentDisplay());
             }
             if (toDel.size() < 2) break;
-            ((TextChannel) channel).deleteMessages(toDel).queue();
+            channel.deleteMessages(toDel).queue();
             MessageBuilder messageBuilder = new MessageBuilder();
             messageBuilder.append("All messages was DELETE.");
             channel.sendMessage(messageBuilder.build()).queue();
