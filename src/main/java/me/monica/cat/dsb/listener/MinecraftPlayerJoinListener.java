@@ -1,7 +1,7 @@
 package me.monica.cat.dsb.listener;
 
 import me.monica.cat.dsb.Main;
-import me.monica.cat.dsb.handler.MinecraftMessageHandler;
+import me.monica.cat.dsb.handler.DiscordMessageHandler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

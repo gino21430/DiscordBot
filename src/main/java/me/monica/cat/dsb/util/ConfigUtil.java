@@ -38,7 +38,7 @@ public class ConfigUtil {
         }
     }
 
-    public Map<String, String> loadLinkMap(File file) {
+    public Map<String, String> loadMap(File file) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
             String data;

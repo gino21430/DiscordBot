@@ -5,6 +5,9 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DiscordMessageHandler {
 
     private boolean dc2mc = true;
@@ -12,7 +15,7 @@ public class DiscordMessageHandler {
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg,players);
+        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg, players);
     }
 
     public void handlePrivateMessage(Message message, User author) {
@@ -42,17 +45,17 @@ public class DiscordMessageHandler {
                     Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);
                 break;
             case "!反省":
-                
+
                 break;
         }
     }
-    
+
     public void mute(String uuid) {
-        if (players.contain(uuid)) players.remove(uuid);
+        if (players.contains(uuid)) players.remove(uuid);
     }
-    
+
     public void unmute(String uuid) {
-        if (!players.contain(uuid)) players.add(uuid);
+        if (!players.contains(uuid)) players.add(uuid);
     }
 
 }

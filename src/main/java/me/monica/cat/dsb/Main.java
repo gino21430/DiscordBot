@@ -1,10 +1,7 @@
 package me.monica.cat.dsb;
 
-import me.monica.cat.dsb.handler.MinecraftMessageHandler;
-import me.monica.cat.dsb.listener.DiscordGuildMessageListener;
-import me.monica.cat.dsb.listener.DiscordPrivateMessageListener;
-import me.monica.cat.dsb.listener.MinecraftMessageListener;
-import me.monica.cat.dsb.listener.MinecraftPlayerJoinListener;
+import me.monica.cat.dsb.handler.DiscordMessageHandler;
+import me.monica.cat.dsb.listener.*;
 import me.monica.cat.dsb.util.ConfigUtil;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -15,7 +12,6 @@ import net.dv8tion.jda.core.managers.GuildController;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,11 +21,11 @@ import java.util.*;
 
 public final class Main extends JavaPlugin {
 
+    public static JDA jda;
     private static TextChannel mainText;
-    public JDA jda;
     private TextChannel logText;
-    private FileConfiguration dcid2uuid = null;
-    private FileConfiguration uuid2dcid = null;
+    private Map<String, String> dcid2uuid = new HashMap<>();
+    private Map<String, String> uuid2dcid = new HashMap<>();
     private Map<String, String> verify = new HashMap<>();
     private Map<String, String> linkMap = new HashMap<>();
 
@@ -98,9 +94,11 @@ public final class Main extends JavaPlugin {
 
     private void loadConfig() {
         ConfigUtil configUtil = new ConfigUtil();
-        uuid2dcid = configUtil.loadConfig(new File(getDataFolder(), "dcid2uuid.yml"));
-        dcid2uuid = configUtil.loadConfig(new File(getDataFolder(), "uuid2dcid.yml"));
-        linkMap = configUtil.loadLinkMap(new File(getDataFolder(), "linkedUser.txt"));
+        File u2d = new File(getDataFolder(), "uuid2dcid.txt");
+        File d2u = new File(getDataFolder(), "dcid2uuid.txt");
+        uuid2dcid = configUtil.loadMap(u2d);
+        dcid2uuid = configUtil.loadMap(d2u);
+        linkMap = configUtil.loadMap(new File(getDataFolder(), "linkedUser.txt"));
     }
 
     private void reload() {
@@ -109,7 +107,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        log("cmd: " + command.getName());
+        log("sender: " + sender.getName() + " , cmd: " + command.getName());
         if (!command.getName().equals("discord")) return false;
         if (args == null || args[0] == null) {
             log("args is null!");
@@ -132,14 +130,14 @@ public final class Main extends JavaPlugin {
                 return true;
             case "delmsg":
                 if (args[1] == null) return false;
-                deleteAllMessages(args[1]);
+                deleteAllMessages(args[1], sender.getName());
                 return true;
             case "mute":
                 if (!(sender instanceof Player)) return false;
                 if (args[1] == null) return false;
                 DiscordMessageHandler dmh = new DiscordMessageHandler();
-                if (args[1]=="on") dmh.mute(sender.getUniqueId().toString());
-                if (args[1]=="off") dmh.unmute(sender.getUniqueId().toString());
+                if (args[1].equals("on")) dmh.mute(((Player) sender).getUniqueId().toString());
+                if (args[1].equals("off")) dmh.unmute(((Player) sender).getUniqueId().toString());
                 return true;
             default:
                 return false;
@@ -150,31 +148,30 @@ public final class Main extends JavaPlugin {
         mainText.sendMessage(msg).queue();
     }
 
-    public void toSendMessageToMultilayers(String msg, Collection<? extends Player> players) {
-        for (Player player : players)
-            player.sendMessage(msg);
+    public void toSendMessageToMultilayers(String msg, List<String> uuids) {
+        List<Player> players = new ArrayList<>();
+        for (String uuid : uuids)
+            getServer().getPlayer(uuid).sendMessage(msg);
     }
 
     public void toSendMessageToPlayer(String msg, String author, Player player) {
         player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
     }
 
-    private void deleteAllMessages(String channelID,String name) {
+    private void deleteAllMessages(String channelID, String name) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
         while (true) {
             List<Message> toDel = new ArrayList<>();
-            int count = 0;
             for (Message msg : channel.getIterableHistory()) {
                 toDel.add(msg);
-                count += 1;
                 if (toDel.size() == 99) break;
                 //Discord.Log("To delete message: "+msg.getContentDisplay());
             }
             if (toDel.size() < 2) break;
             channel.deleteMessages(toDel).queue();
             MessageBuilder messageBuilder = new MessageBuilder();
-            messageBuilder.append("All messages was DELETE by "+name);
+            messageBuilder.append("All messages was DELETE by ").append(name);
             channel.sendMessage(messageBuilder.build()).queue();
         }
     }
@@ -199,7 +196,7 @@ public final class Main extends JavaPlugin {
         } else
             player.sendMessage("You have not link any discord user.");
     }
-    
+
     public void unlink(String uuid) {
         String dcid = uuid2dcid.get(uuid);
         uuid2dcid.remove(uuid);
@@ -207,26 +204,23 @@ public final class Main extends JavaPlugin {
         linkMap.remove(dcid);
         Guild guild = jda.getGuildById("quietpondId");
         GuildController gc = new GuildController(guild);
-        Role bannedRole = jda.getRoleById("roleid");
-        Role opRole = jda.getRoleById("roleid");
         Member member = guild.getMemberById(dcid);
-        gc.removeRolesFromMember(member,member.getRoles());
-        
+        gc.removeRolesFromMember(member, member.getRoles());
+
     }
-    
+
     public void tempBan(String dcid) {
         Guild guild = jda.getGuildById("quietpondId");
         GuildController gc = new GuildController(guild);
         Role bannedRole = jda.getRoleById("roleid");
-        Role opRole = jda.getRoleById("roleid");
         Member member = guild.getMemberById(dcid);
-        gc.addRolesToMember(member,bannedRole);
+        gc.addRolesToMember(member, bannedRole);
     }
 
     public void detectNameChanged(Player player) {
         String name = player.getName();
         String uuid = player.getUniqueId().toString();
-        String dcid = uuid2dcid.getString(uuid);
+        String dcid = uuid2dcid.get(uuid);
         if (dcid == null) return;
         if (linkMap.get(dcid).equals(name)) return;
 
