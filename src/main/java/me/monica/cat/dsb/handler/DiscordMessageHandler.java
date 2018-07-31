@@ -8,10 +8,11 @@ import org.bukkit.entity.Player;
 public class DiscordMessageHandler {
 
     private boolean dc2mc = true;
+    private List<String> players = new ArrayList<>();
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toDiscordMainTextChannel(msg);
+        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg,players);
     }
 
     public void handlePrivateMessage(Message message, User author) {
@@ -39,7 +40,19 @@ public class DiscordMessageHandler {
                 Player player = Main.getPlugin().getServer().getPlayer(str[2]);
                 if (player != null)
                     Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);
+                break;
+            case "!反省":
+                
+                break;
         }
+    }
+    
+    public void mute(String uuid) {
+        if (players.contain(uuid)) players.remove(uuid);
+    }
+    
+    public void unmute(String uuid) {
+        if (!players.contain(uuid)) players.add(uuid);
     }
 
 }

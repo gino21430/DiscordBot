@@ -11,10 +11,6 @@ public class MinecraftMessageHandler {
     private boolean mc2dc = true;
 
     public void handle(String msg) {
-        Collection<? extends Player> players = Main.getPlugin().getServer().getOnlinePlayers();
-        for (Player player : players) {
-            if (muteList.contains(player.getUniqueId().toString())) players.remove(player);
-        }
         if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(msg);
     }
 
@@ -24,14 +20,6 @@ public class MinecraftMessageHandler {
 
     public void setMc2dc(boolean mc2dc) {
         this.mc2dc = mc2dc;
-    }
-
-    public void mute(String uuid) {
-        muteList.add(uuid);
-    }
-
-    public void unmute(String uuid) {
-        muteList.remove(uuid);
     }
 
 }

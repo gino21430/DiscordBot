@@ -14,7 +14,8 @@ public class MinecraftPlayerJoinListener implements Listener {
         Player player = e.getPlayer();
         Main.getPlugin().detectNameChanged(player);
         e.setJoinMessage("Welcome to the Summon's Rift");
-        MinecraftMessageHandler minecraftMessageHandler = new MinecraftMessageHandler();
-        minecraftMessageHandler.unmute(player.getUniqueId().toString());
+        DiscordMessageHandler dmh = new DiscordMessageHandler();
+        dmh.unmute(player.getUniqueId().toString());
+        //minecraftMessageHandler.unmute(player.getUniqueId().toString());
     }
 }

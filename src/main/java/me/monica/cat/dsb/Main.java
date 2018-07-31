@@ -45,6 +45,7 @@ public final class Main extends JavaPlugin {
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
+        getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
         loadConfig();
         // Plugin startup logic
         startBot(Bukkit.getConsoleSender());
@@ -131,15 +132,15 @@ public final class Main extends JavaPlugin {
                 return true;
             case "delmsg":
                 if (args[1] == null) return false;
-                DeleteAllMessages(args[1]);
+                deleteAllMessages(args[1]);
                 return true;
             case "mute":
                 if (!(sender instanceof Player)) return false;
-                if (args[1] == null || args[2] == null) return false;
-                boolean bool = false;
-                if (args[2].equals("on")) bool = true;
-                MinecraftMessageHandler mh = new MinecraftMessageHandler();
-                if (args[1].equals("mc2dc") && sender.isOp()) mh.setMc2dc(bool);
+                if (args[1] == null) return false;
+                DiscordMessageHandler dmh = new DiscordMessageHandler();
+                if (args[1]=="on") dmh.mute(sender.getUniqueId().toString());
+                if (args[1]=="off") dmh.unmute(sender.getUniqueId().toString());
+                return true;
             default:
                 return false;
         }
@@ -158,7 +159,7 @@ public final class Main extends JavaPlugin {
         player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
     }
 
-    private void DeleteAllMessages(String channelID) {
+    private void deleteAllMessages(String channelID,String name) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
         while (true) {
@@ -167,13 +168,13 @@ public final class Main extends JavaPlugin {
             for (Message msg : channel.getIterableHistory()) {
                 toDel.add(msg);
                 count += 1;
-                if (count == 99) break;
+                if (toDel.size() == 99) break;
                 //Discord.Log("To delete message: "+msg.getContentDisplay());
             }
             if (toDel.size() < 2) break;
             channel.deleteMessages(toDel).queue();
             MessageBuilder messageBuilder = new MessageBuilder();
-            messageBuilder.append("All messages was DELETE.");
+            messageBuilder.append("All messages was DELETE by "+name);
             channel.sendMessage(messageBuilder.build()).queue();
         }
     }
@@ -196,7 +197,30 @@ public final class Main extends JavaPlugin {
             else gc.addRolesToMember(member, playerRole);
             player.sendMessage("Linked to " + member.getUser().getName());
         } else
-            player.sendMessage("You have not link any Discord user.");
+            player.sendMessage("You have not link any discord user.");
+    }
+    
+    public void unlink(String uuid) {
+        String dcid = uuid2dcid.get(uuid);
+        uuid2dcid.remove(uuid);
+        dcid2uuid.remove(dcid);
+        linkMap.remove(dcid);
+        Guild guild = jda.getGuildById("quietpondId");
+        GuildController gc = new GuildController(guild);
+        Role bannedRole = jda.getRoleById("roleid");
+        Role opRole = jda.getRoleById("roleid");
+        Member member = guild.getMemberById(dcid);
+        gc.removeRolesFromMember(member,member.getRoles());
+        
+    }
+    
+    public void tempBan(String dcid) {
+        Guild guild = jda.getGuildById("quietpondId");
+        GuildController gc = new GuildController(guild);
+        Role bannedRole = jda.getRoleById("roleid");
+        Role opRole = jda.getRoleById("roleid");
+        Member member = guild.getMemberById(dcid);
+        gc.addRolesToMember(member,bannedRole);
     }
 
     public void detectNameChanged(Player player) {
