@@ -2,6 +2,7 @@ package me.monica.cat.dsb.handler;
 
 import me.monica.cat.dsb.Main;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.User;
 import org.bukkit.entity.Player;
 
@@ -10,21 +11,28 @@ import java.util.List;
 
 public class DiscordMessageHandler {
 
-    private boolean dc2mc = true;
-    private List<String> players = new ArrayList<>();
+    private static boolean dc2mc;
+    private static List<String> uuids;
+
+    public static void init() {
+        dc2mc = true;
+        uuids = new ArrayList<>();
+    }
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg, players);
+        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg, uuids);
     }
 
-    public void handlePrivateMessage(Message message, User author) {
+    public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
         String msg = message.getContentStripped();
         if (!msg.startsWith("!")) return;
+        Main.log("PM's message: " + msg);
         String[] str = msg.split(" ");
         switch (str[0]) {
             case "!link":
-                Main.getPlugin().verifyStart(author, str[1]);
+                if (str.length < 2) channel.sendMessage("You must enter a argument.").queue();
+                else Main.getPlugin().verifyStart(author, str[1]);
                 break;
             case "!unlink":
                 break;
@@ -51,11 +59,16 @@ public class DiscordMessageHandler {
     }
 
     public void mute(String uuid) {
-        if (players.contains(uuid)) players.remove(uuid);
+        uuids.remove(uuid);
     }
 
     public void unmute(String uuid) {
-        if (!players.contains(uuid)) players.add(uuid);
+        Main.log("uuids size: " + uuids.size() + " , uuid: " + uuid);
+        if (!uuids.contains(uuid)) {
+            Main.log("player is NOT in List");
+            uuids.add(uuid);
+            Main.log("after uuids size: " + uuids.size());
+        }
     }
 
 }

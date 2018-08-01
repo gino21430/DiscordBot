@@ -9,6 +9,6 @@ public class DiscordGuildMessageListener extends ListenerAdapter {
     @SubscribeEvent
     public void onGuildMessageReceived(GuildMessageReceivedEvent e) {
         DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
-        discordMessageHandler.handleGuildMessage(e.getAuthor(), e.getMessage().getContentDisplay());
+        discordMessageHandler.handleGuildMessage(e.getAuthor(), e.getMessage().getContentStripped());
     }
 }

@@ -11,6 +11,6 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
     public void onPrivateMessageReceived(PrivateMessageReceivedEvent e) {
         Message message = e.getMessage();
         DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
-        discordMessageHandler.handlePrivateMessage(message, e.getAuthor());
+        discordMessageHandler.handlePrivateMessage(message, e.getAuthor(), e.getChannel());
     }
 }
