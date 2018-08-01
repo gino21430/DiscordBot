@@ -21,7 +21,7 @@ public class DiscordMessageHandler {
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(msg, uuids);
+        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(author.getName(), msg, uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
@@ -52,23 +52,19 @@ public class DiscordMessageHandler {
                 if (player != null)
                     Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);
                 break;
-            case "!反省":
-
+            case "!WTF":
                 break;
         }
     }
 
     public void mute(String uuid) {
         uuids.remove(uuid);
+        Main.log("uuids size: " + uuids.size());
     }
 
     public void unmute(String uuid) {
-        Main.log("uuids size: " + uuids.size() + " , uuid: " + uuid);
-        if (!uuids.contains(uuid)) {
-            Main.log("player is NOT in List");
-            uuids.add(uuid);
-            Main.log("after uuids size: " + uuids.size());
-        }
+        if (!uuids.contains(uuid)) uuids.add(uuid);
+        Main.log("uuids size: " + uuids.size());
     }
 
 }

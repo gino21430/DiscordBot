@@ -9,13 +9,11 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
-import net.dv8tion.jda.core.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.core.managers.GuildController;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,8 +25,9 @@ import java.util.*;
 public final class Main extends JavaPlugin {
 
     public JDA jda;
-    private static TextChannel mainText;
-    private FileConfiguration config;
+    private Guild guild;
+    private TextChannel mainText;
+    public FileConfiguration config;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
     private Map<String, String> verify;
@@ -48,6 +47,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
+        getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
         if (!startBot(Bukkit.getConsoleSender())) return;
         mainText.sendMessage("**Server Start Running**").queue();
@@ -79,6 +79,7 @@ public final class Main extends JavaPlugin {
                     .addEventListener(new DiscordPrivateMessageListener())
                     .buildBlocking(JDA.Status.CONNECTED);
             mainText = jda.getTextChannelById(getConfig().getString("Channel"));
+            guild = mainText.getGuild();
             //logText = jda.getTextChannelById("471136766204575756");
             toDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
             return true;
@@ -117,6 +118,10 @@ public final class Main extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Guild getGuild() {
+        return guild;
     }
 
     @Override
@@ -178,9 +183,9 @@ public final class Main extends JavaPlugin {
         getServer().broadcastMessage("[§c系統公告§r] " + msg);
     }
 
-    public void toSendMessageToMultilayers(String msg, List<String> uuids) {
+    public void toSendMessageToMultilayers(String authorName, String msg, List<String> uuids) {
         for (String uuid : uuids) {
-            getServer().getPlayer(UUID.fromString(uuid)).sendMessage(msg);
+            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("[§aDiscord§r] §6" + authorName + "§r : " + msg);
         }
     }
 

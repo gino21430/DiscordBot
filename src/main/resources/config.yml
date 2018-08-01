@@ -1,2 +1,3 @@
 Token: "your bot token"
-Channel: "the channel which bot listen to"
+Channel: "the channel which bot will listen to"
+Save: false

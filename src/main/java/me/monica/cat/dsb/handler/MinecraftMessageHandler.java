@@ -1,6 +1,7 @@
 package me.monica.cat.dsb.handler;
 
 import me.monica.cat.dsb.Main;
+import org.bukkit.ChatColor;
 
 public class MinecraftMessageHandler {
 
@@ -11,7 +12,7 @@ public class MinecraftMessageHandler {
     }
 
     public void handle(String msg) {
-        if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(msg);
+        if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
     }
 
     public boolean ismc2dc() {

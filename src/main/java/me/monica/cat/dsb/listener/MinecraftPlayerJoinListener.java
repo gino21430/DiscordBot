@@ -13,7 +13,7 @@ public class MinecraftPlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
         Main.getPlugin().detectNameChanged(player);
-        e.setJoinMessage("Welcome to the Summon's Rift");
+        e.setJoinMessage("§6歡迎來到文靜之潭");
         DiscordMessageHandler dmh = new DiscordMessageHandler();
         dmh.unmute(player.getUniqueId().toString());
         //minecraftMessageHandler.unmute(player.getUniqueId().toString());
