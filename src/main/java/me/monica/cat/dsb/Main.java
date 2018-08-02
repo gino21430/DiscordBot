@@ -21,17 +21,20 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import org.yaml.snakeyaml.tokens.*;
 
 public final class Main extends JavaPlugin {
 
     public JDA jda;
     private Guild guild;
+	private GuildController gc;
     private TextChannel mainText;
     public FileConfiguration config;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
     private Map<String, String> verify;
     private FileConfiguration linkedUser;
+	private FileConfiguration bangPlayers;
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
@@ -50,7 +53,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
         if (!startBot(Bukkit.getConsoleSender())) return;
-        mainText.sendMessage("**Server Start Running**").queue();
+        //mainText.sendMessage("**Server Start Running**").queue();
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
     }
@@ -71,27 +74,29 @@ public final class Main extends JavaPlugin {
         }
 
         try {
-            //1服BOT
             String token = config.getString("Token");
             jda = new JDABuilder(AccountType.BOT)
                     .setToken(token)
                     .addEventListener(new DiscordGuildMessageListener())
                     .addEventListener(new DiscordPrivateMessageListener())
-                    .buildBlocking(JDA.Status.CONNECTED);
-            mainText = jda.getTextChannelById(getConfig().getString("Channel"));
+                    .buildAsync();
+            mainText = jda.getTextChannelById(config.getString("Channel"));
             guild = mainText.getGuild();
+			gc = new GuildController(guild);
             //logText = jda.getTextChannelById("471136766204575756");
-            toDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
+            //toDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
             return true;
-        } catch (LoginException | InterruptedException e) {
+        } catch (LoginException e) {
             e.printStackTrace();
             return false;
         }
     }
 
     private void stopBot(CommandSender sender) {
-        if (jda.getStatus() == JDA.Status.SHUTDOWN || jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
-            sender.sendMessage("Its status have been SHUTDOWN!");
+        if (jda==null || 
+			jda.getStatus()==JDA.Status.SHUTTING_DOWN ||
+			jda.getStatus()==JDA.Status.SHUTDOWN) {
+            sender.sendMessage("It has been SHUTDOWN!");
             return;
         }
         String name = "Console";
@@ -107,7 +112,16 @@ public final class Main extends JavaPlugin {
         verify = new HashMap<>();
         uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
         dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
-        linkedUser = configUtil.loadConfig("linkedUser.yml");
+        linkedUser = configUtil.loadConfig("linkedUsers.yml");
+		bangPlayers = configUtil.loadConfig("bangPlayers.yml");
+		long now = new Date().getTime();
+		Map<String,Object> map = bangPlayers.getValues(false);
+		for ( Map.Entry entry : map.entrySet()) {
+			if (Long.parseLong(entry.getValue().toString()) >= now) {
+				Member member = guild.getMemberById(entry.getKey());
+				gc.ban(member,7);
+			}
+		}
     }
 
     public void saveConfig() {
@@ -241,8 +255,14 @@ public final class Main extends JavaPlugin {
         GuildController gc = new GuildController(guild);
         Member member = guild.getMemberById(dcid);
         gc.removeRolesFromMember(member, member.getRoles()).queue();
-
     }
+	
+	public void bangPlayer(String dcid) {
+		Role bang = guild.getRoleById("banggggg");
+		gc.addRolesToMember(guild.getMemberById(dcid),bang);
+		Date date = new Date();
+		bangPlayers.set(dcid,date.getTime()+86400*3);
+	}
 
     public void detectNameChanged(Player player) {
         String name = player.getName();
