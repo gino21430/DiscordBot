@@ -60,12 +60,13 @@ public final class Main extends JavaPlugin {
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
+        mainText.sendMessage("**Server Starting**").queue();
     }
 
     @Override
     public void onDisable() {
         if (jda != null) {
-            mainText.sendMessage("**Server Stop Running**").queue();
+            mainText.sendMessage("**Server Stopping**").queue();
             stopBot(Bukkit.getConsoleSender());
         }
     }
@@ -73,7 +74,7 @@ public final class Main extends JavaPlugin {
     private void startBot(CommandSender sender) {
         if (jda != null) {
             if (jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
-                sender.sendMessage("It is  SHUTTING DOWN!");
+                sender.sendMessage("It is SHUTTING DOWN!");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -91,6 +92,7 @@ public final class Main extends JavaPlugin {
             mainText = jda.getTextChannelById(config.getString("Channel"));
             guild = mainText.getGuild();
             gc = new GuildController(guild);
+            mainText.sendMessage(":white_check_mark: Bot was started").queue();
         } catch (LoginException | InterruptedException e) {
             e.printStackTrace();
         }

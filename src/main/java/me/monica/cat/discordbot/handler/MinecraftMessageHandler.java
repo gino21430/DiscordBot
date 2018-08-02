@@ -22,19 +22,22 @@ public class MinecraftMessageHandler {
     public void handle(Player player, String msg) {
         if (msg.contains("[i]")) {
             StringBuilder tellraw = new StringBuilder();
+            tellraw.append("tellraw @a [");
             String[] pure = msg.split("\\[i]");
             for (int i = 0, len = pure.length; i < len; i++) {
                 tellraw.append(dealPureString(pure[i]));
                 tellraw.append(dealItem(player.getInventory().getItemInMainHand()));
                 if (i + 1 < len) tellraw.append(",");
             }
+            tellraw.append("]");
+            Main.log("tellraw: " + tellraw.toString());
             getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
             if (mc2dc) {
                 String displayName;
                 ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
                 if (meta.hasDisplayName()) displayName = meta.getDisplayName();
                 else displayName = player.getInventory().getItemInMainHand().getType().toString();
-                Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg.replace("[i]", displayName)));
+                Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg.replace("[i]", "[" + displayName + "]")));
             }
         } else if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
     }
