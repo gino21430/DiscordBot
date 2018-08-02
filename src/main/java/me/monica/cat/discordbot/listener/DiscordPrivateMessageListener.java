@@ -1,24 +1,26 @@
-package me.monica.cat.dsb.listener;
+package me.monica.cat.discordbot.listener;
 
-import me.monica.cat.dsb.handler.DiscordMessageHandler;
+
+import me.monica.cat.discordbot.Main;
+import me.monica.cat.discordbot.handler.DiscordMessageHandler;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.hooks.SubscribeEvent;
-import java.util.*;
-import me.monica.cat.dsb.*;
+
+import java.util.List;
 
 public class DiscordPrivateMessageListener extends ListenerAdapter {
     @SubscribeEvent
     public void onPrivateMessageReceived(PrivateMessageReceivedEvent e) {
         Message message = e.getMessage();
-		List<Message.Attachment> list = message.getAttachments();
-		if (list != null) {
+        List<Message.Attachment> list = message.getAttachments();
+        if (list != null) {
             for (Message.Attachment a : list)
                 Main.log("FileName: " + a.getFileName() + ",size: " + a.getSize() + ",url: " + a.getUrl());
         }
-        	DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
-        	discordMessageHandler.handlePrivateMessage(message, e.getAuthor(), e.getChannel());
+        DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
+        discordMessageHandler.handlePrivateMessage(message, e.getAuthor(), e.getChannel());
 
     }
 }

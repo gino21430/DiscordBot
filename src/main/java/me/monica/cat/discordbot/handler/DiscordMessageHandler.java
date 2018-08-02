@@ -1,13 +1,16 @@
-package me.monica.cat.dsb.handler;
+package me.monica.cat.discordbot.handler;
 
-import me.monica.cat.dsb.Main;
+
+import me.monica.cat.discordbot.Main;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.User;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class DiscordMessageHandler {
 

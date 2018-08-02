@@ -1,9 +1,10 @@
-package me.monica.cat.dsb;
+package me.monica.cat.discordbot;
 
-import me.monica.cat.dsb.handler.DiscordMessageHandler;
-import me.monica.cat.dsb.handler.MinecraftMessageHandler;
-import me.monica.cat.dsb.listener.*;
-import me.monica.cat.dsb.util.ConfigUtil;
+
+import me.monica.cat.discordbot.handler.DiscordMessageHandler;
+import me.monica.cat.discordbot.handler.MinecraftMessageHandler;
+import me.monica.cat.discordbot.listener.*;
+import me.monica.cat.discordbot.util.ConfigUtil;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -22,13 +23,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-//TODO 驗證 驗證系統
-
 public final class Main extends JavaPlugin {
 
     public JDA jda;
     private Guild guild;
-	private GuildController gc;
+    private GuildController gc;
     private TextChannel mainText;
     public FileConfiguration config;
     private FileConfiguration dcid2uuid;
@@ -91,16 +90,16 @@ public final class Main extends JavaPlugin {
                     .buildBlocking();
             mainText = jda.getTextChannelById(config.getString("Channel"));
             guild = mainText.getGuild();
-			gc = new GuildController(guild);
+            gc = new GuildController(guild);
         } catch (LoginException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     private void stopBot(CommandSender sender) {
-        if (jda==null || 
-			jda.getStatus()==JDA.Status.SHUTTING_DOWN ||
-			jda.getStatus()==JDA.Status.SHUTDOWN) {
+        if (jda == null ||
+                jda.getStatus() == JDA.Status.SHUTTING_DOWN ||
+                jda.getStatus() == JDA.Status.SHUTDOWN) {
             sender.sendMessage("It has been SHUTDOWN!");
             return;
         }
@@ -174,10 +173,10 @@ public final class Main extends JavaPlugin {
                         return false;
                 }
             } else if (command.getName().equals("color")) {
-                String tmp = "";
+                StringBuilder tmp = new StringBuilder();
                 for (int i = 0; i < 10; i++)
-                    tmp += "§" + i + i + "§r";
-                sender.sendMessage(tmp);
+                    tmp.append("§").append(i).append(i).append("§r");
+                sender.sendMessage(tmp.toString());
                 return true;
             }
         } catch (InsuffcientArgumentsException e) {
@@ -240,8 +239,7 @@ public final class Main extends JavaPlugin {
         String dcid = verify.get(name);
         if (dcid != null) {
             linkedUser.set(dcid, name);
-            verify.remove(name,dcid);
-            GuildController gc = new GuildController(guild);
+            verify.remove(name, dcid);
             Role playerRole = jda.getRoleById("roleid");
             Role opRole = jda.getRoleById("roleid");
             Member member = guild.getMemberById(dcid);
@@ -264,7 +262,6 @@ public final class Main extends JavaPlugin {
         uuid2dcid.set(uuid, null);
         dcid2uuid.set(dcid, null);
         linkedUser.set(dcid, null);
-        GuildController gc = new GuildController(guild);
         Member member = guild.getMemberById(dcid);
         gc.removeRolesFromMember(member, member.getRoles()).queue();
     }
