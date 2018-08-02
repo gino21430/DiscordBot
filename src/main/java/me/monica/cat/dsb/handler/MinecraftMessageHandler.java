@@ -8,6 +8,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Iterator;
 import java.util.List;
+import org.bukkit.inventory.meta.*;
+import org.bukkit.command.*;
 
 public class MinecraftMessageHandler {
 
@@ -23,20 +25,26 @@ public class MinecraftMessageHandler {
         // String.format(explosion,displayName,type,displayName,finalLore.toString())
         if (msg.contains("[i]")) {
             ItemStack item = player.getInventory().getItemInMainHand();
+			ItemMeta meta = item.getItemMeta();
             String type = item.getType().toString();
-            String displayName = item.getItemMeta().getDisplayName();
-            List<String> lore = item.getItemMeta().getLore();
-
-            StringBuilder finalLore = new StringBuilder();
-            Iterator iter = lore.iterator();
-            while (iter.hasNext()) {
-                String str = (String) iter.next();
-                finalLore.append("[\\\"").append(str).append("\\\"]"); //[\"上面\"],[\"下面\"]
-                if (iter.hasNext()) finalLore.append(",");
-            }
+			String displayName;
+			if (meta.hasDisplayName()) displayName = meta.getDisplayName();
+			else displayName = type;
+			
+			StringBuilder finalLore = new StringBuilder();
+			if (meta.hasLore()) {
+				List<String> loreList = meta.getLore();
+				Iterator iter = loreList.iterator();
+				while(iter.hasNext()) {
+					finalLore.append("\\\"").append(iter.next()).append("\\\"");
+					if (iter.hasNext()) finalLore.append(",");
+				}
+			} else finalLore.append("");
+            
             Main.log("Final Lore: " + finalLore.toString());
 
-            System.out.printf(explosion, displayName, type, displayName, finalLore);
+            String tellraw = String.format(explosion, displayName, type, displayName, finalLore);
+			Main.getPlugin().getServer().dispatchCommand(new ConsoleCommandSender(),tellraw);
         }
 
 

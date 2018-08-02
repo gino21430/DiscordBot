@@ -240,7 +240,7 @@ public final class Main extends JavaPlugin {
         String dcid = verify.get(name);
         if (dcid != null) {
             linkedUser.set(dcid, name);
-            verify.remove(name, dcid);
+            verify.remove(name,dcid);
             GuildController gc = new GuildController(guild);
             Role playerRole = jda.getRoleById("roleid");
             Role opRole = jda.getRoleById("roleid");
