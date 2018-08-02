@@ -9,7 +9,6 @@ public class MinecraftPlayerQuitListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        e.setQuitMessage("§6" + e.getPlayer().getName() + " 離開了文靜之潭");
         DiscordMessageHandler dmh = new DiscordMessageHandler();
         dmh.mute(e.getPlayer().getUniqueId().toString());
     }

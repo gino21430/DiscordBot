@@ -1,10 +1,10 @@
-name: DiscordServiceBot
+name: DiscordBot
 version: ${project.version}
 main: me.monica.cat.dsb.Main
 perfix: [DiscordBot]
 commands:
   discord:
     description: This is a discord command.
-    usage: /<command> start|stop|reload|verify|mute
-    permission: op.oao
-    permission-message: not OP?
+    usage: usage: /<command> start|stop|reload|verify|mute
+    permission: true
+    permission-message: not Player ? (OAO)

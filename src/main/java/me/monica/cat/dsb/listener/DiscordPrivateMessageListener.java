@@ -14,14 +14,11 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
         Message message = e.getMessage();
 		List<Message.Attachment> list = message.getAttachments();
 		if (list != null) {
-			Main.log("Received a Attachment");
-			for (Message.Attachment a : list) {
-				if (a.getFileName()==null || !a.getFileName().equals("vanxin")) return;
-				Main.getPlugin().wait6hPardon(dcid);
-			}
-		} else {
+            for (Message.Attachment a : list)
+                Main.log("FileName: " + a.getFileName() + ",size: " + a.getSize() + ",url: " + a.getUrl());
+        }
         	DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
         	discordMessageHandler.handlePrivateMessage(message, e.getAuthor(), e.getChannel());
-		}
+
     }
 }

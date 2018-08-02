@@ -21,7 +21,8 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import org.yaml.snakeyaml.tokens.*;
+
+//TODO 驗證 驗證系統
 
 public final class Main extends JavaPlugin {
 
@@ -32,9 +33,8 @@ public final class Main extends JavaPlugin {
     public FileConfiguration config;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
-    private Map<String, String> verify;
+    public Map<String, String> verify;
     private FileConfiguration linkedUser;
-	private FileConfiguration bangPlayers;
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
@@ -46,14 +46,19 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        init();
+        ConfigUtil configUtil = new ConfigUtil();
+        config = configUtil.loadConfig("config.yml");
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
-        if (!startBot(Bukkit.getConsoleSender())) return;
+        startBot(Bukkit.getConsoleSender());
         //mainText.sendMessage("**Server Start Running**").queue();
+        verify = new HashMap<>();
+        uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
+        dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
+        linkedUser = configUtil.loadConfig("linkedUsers.yml");
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
     }
@@ -66,29 +71,29 @@ public final class Main extends JavaPlugin {
         }
     }
 
-    private boolean startBot(CommandSender sender) {
-
-        if (jda != null && jda.getStatus() != JDA.Status.SHUTDOWN) {
-            sender.sendMessage("Its status is not SHUTDOWN!");
-            return true;
+    private void startBot(CommandSender sender) {
+        if (jda != null) {
+            if (jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
+                sender.sendMessage("It is  SHUTTING DOWN!");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else return;
         }
-
         try {
             String token = config.getString("Token");
             jda = new JDABuilder(AccountType.BOT)
                     .setToken(token)
                     .addEventListener(new DiscordGuildMessageListener())
                     .addEventListener(new DiscordPrivateMessageListener())
-                    .buildAsync();
+                    .buildBlocking();
             mainText = jda.getTextChannelById(config.getString("Channel"));
             guild = mainText.getGuild();
 			gc = new GuildController(guild);
-            //logText = jda.getTextChannelById("471136766204575756");
-            //toDiscordMainTextChannel(":white_check_mark: Bot Start Running!");
-            return true;
-        } catch (LoginException e) {
+        } catch (LoginException | InterruptedException e) {
             e.printStackTrace();
-            return false;
         }
     }
 
@@ -113,80 +118,73 @@ public final class Main extends JavaPlugin {
         uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
         dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
-		bangPlayers = configUtil.loadConfig("bangPlayers.yml");
-		long now = new Date().getTime();
-		Map<String,Object> map = bangPlayers.getValues(false);
-		for ( Map.Entry entry : map.entrySet()) {
-			if (Long.parseLong(entry.getValue().toString()) >= now) {
-				Member member = guild.getMemberById(entry.getKey());
-				gc.ban(member,7);
-			}
-		}
     }
 
     public void saveConfig() {
         try {
             uuid2dcid.save(new File(getDataFolder(), "uuid2dcid.yml"));
             uuid2dcid.save(new File(getDataFolder(), "dcid2uuid.yml"));
-            linkedUser.save(new File(getDataFolder(), "linkedUser.yml"));
+            linkedUser.save(new File(getDataFolder(), "linkedUsers.yml"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public Guild getGuild() {
-        return guild;
-    }
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        log("sender: " + sender.getName() + " , cmd: " + command.getName());
         try {
-            if (!command.getName().equals("discord")) return false;
-            if (args.length < 1) return false;
-            log("args[0]: " + args[0]);
-            switch (args[0].toLowerCase()) {
-                case "start":
-                    startBot(sender);
-                    return true;
-                case "stop":
-                    stopBot(sender);
-                    return true;
-                case "reload":
-                    init();
-                    return true;
-                case "verify":
-                    if (sender instanceof Player) verifyMinecraft((Player) sender);
-                    return true;
-                case "delmsg":
-                    if (args.length < 2) throw new InsuffcientArgumentsException(2);
-                    else deleteAllMessages(args[1], sender.getName());
-                    return true;
-                case "mute":
-                    if (!(sender instanceof Player)) return false;
-                    if (args.length < 2) throw new InsuffcientArgumentsException(2);
-                    else {
-                        DiscordMessageHandler dmh = new DiscordMessageHandler();
-                        switch (args[1]) {
-                            case "on":
-                                dmh.mute(((Player) sender).getUniqueId().toString());
-                                break;
-                            case "off":
-                                dmh.unmute(((Player) sender).getUniqueId().toString());
-                                break;
-                            default:
-                                sender.sendMessage("/discord mute on|off");
-                                break;
+            if (command.getName().equals("discord")) {
+                if (args.length < 1) return false;
+                switch (args[0].toLowerCase()) {
+                    case "start":
+                        startBot(sender);
+                        return true;
+                    case "stop":
+                        stopBot(sender);
+                        return true;
+                    case "reload":
+                        init();
+                        return true;
+                    case "verify":
+                        if (sender instanceof Player) verifyMinecraft((Player) sender);
+                        return true;
+                    case "delmsg":
+                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
+                        else deleteAllMessages(args[1], sender.getName());
+                        return true;
+                    case "mute":
+                        if (!(sender instanceof Player)) return false;
+                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
+                        else {
+                            DiscordMessageHandler dmh = new DiscordMessageHandler();
+                            switch (args[1]) {
+                                case "on":
+                                    dmh.mute(((Player) sender).getUniqueId().toString());
+                                    break;
+                                case "off":
+                                    dmh.unmute(((Player) sender).getUniqueId().toString());
+                                    break;
+                                default:
+                                    sender.sendMessage("§6/discord mute on|off");
+                                    break;
+                            }
                         }
-                    }
-                    return true;
-                default:
-                    return false;
+                        return true;
+                    default:
+                        return false;
+                }
+            } else if (command.getName().equals("color")) {
+                String tmp = "";
+                for (int i = 0; i < 10; i++)
+                    tmp += "§" + i + i + "§r";
+                sender.sendMessage(tmp);
+                return true;
             }
         } catch (InsuffcientArgumentsException e) {
             e.warn(sender);
             return true;
         }
+        return false;
     }
 
     public void toDiscordMainTextChannel(String msg) {
@@ -199,7 +197,7 @@ public final class Main extends JavaPlugin {
 
     public void toSendMessageToMultilayers(String authorName, String msg, List<String> uuids) {
         for (String uuid : uuids) {
-            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("[§aDiscord§r] §6" + authorName + "§r : " + msg);
+            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("§8[§r§aDiscord§r§8]§r §e" + authorName + "§r > " + msg);
         }
     }
 
@@ -225,8 +223,16 @@ public final class Main extends JavaPlugin {
         }
     }
 
-    public void verifyStart(User author, String minecraftName) {
+    public int verifyStart(User author, String minecraftName) {
+        if (linkedUser.getString(author.getId()) != null) return 3; //已被綁定
+        if (getServer().getPlayer(minecraftName) == null) return 2; //角色不在線
+        if (verify.get(minecraftName) != null) return 1; //已有人在對同角色進行驗證
+        log("提出要求用戶: " + author.getName() + ", 驗證對象: " + minecraftName);
         verify.put(minecraftName, author.getId());
+        log("========== 目前清單 ==========");
+        for (Map.Entry entry : verify.entrySet())
+            log("提出要求用戶: " + entry.getValue() + ", 驗證對象: " + entry.getKey());
+        return 0;
     }
 
     private void verifyMinecraft(Player player) {
@@ -234,7 +240,7 @@ public final class Main extends JavaPlugin {
         String dcid = verify.get(name);
         if (dcid != null) {
             linkedUser.set(dcid, name);
-            Guild guild = jda.getGuildById("quietpond");
+            verify.remove(name, dcid);
             GuildController gc = new GuildController(guild);
             Role playerRole = jda.getRoleById("roleid");
             Role opRole = jda.getRoleById("roleid");
@@ -246,23 +252,22 @@ public final class Main extends JavaPlugin {
             player.sendMessage("You have not link any discord user.");
     }
 
-    public void unlink(String uuid) {
-        String dcid = uuid2dcid.getString(uuid);
+    public void unlink(String input, boolean isFromMinecraft) {
+        String uuid, dcid;
+        if (isFromMinecraft) {
+            uuid = getServer().getPlayer(input).getUniqueId().toString();
+            dcid = uuid2dcid.getString(uuid);
+        } else {
+            dcid = input;
+            uuid = dcid2uuid.getString(dcid);
+        }
         uuid2dcid.set(uuid, null);
         dcid2uuid.set(dcid, null);
         linkedUser.set(dcid, null);
-        Guild guild = jda.getGuildById("quietpondId");
         GuildController gc = new GuildController(guild);
         Member member = guild.getMemberById(dcid);
         gc.removeRolesFromMember(member, member.getRoles()).queue();
     }
-	
-	public void bangPlayer(String dcid) {
-		Role bang = guild.getRoleById("banggggg");
-		gc.addRolesToMember(guild.getMemberById(dcid),bang);
-		Date date = new Date();
-		bangPlayers.set(dcid,date.getTime()+86400*3);
-	}
 
     public void detectNameChanged(Player player) {
         String name = player.getName();
