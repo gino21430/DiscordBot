@@ -1,6 +1,7 @@
-package me.monica.cat.dsb.listener;
+package me.monica.cat.discordbot.listener;
 
-import me.monica.cat.dsb.handler.MinecraftMessageHandler;
+
+import me.monica.cat.discordbot.handler.MinecraftMessageHandler;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

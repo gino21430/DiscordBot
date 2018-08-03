@@ -1,6 +1,7 @@
-package me.monica.cat.dsb.listener;
+package me.monica.cat.discordbot.listener;
 
-import me.monica.cat.dsb.handler.DiscordMessageHandler;
+
+import me.monica.cat.discordbot.handler.DiscordMessageHandler;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.hooks.SubscribeEvent;

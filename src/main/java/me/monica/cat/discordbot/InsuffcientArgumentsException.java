@@ -1,4 +1,4 @@
-package me.monica.cat.dsb;
+package me.monica.cat.discordbot;
 
 import org.bukkit.command.CommandSender;
 
