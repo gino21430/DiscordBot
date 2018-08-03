@@ -1,9 +1,9 @@
 package me.monica.cat.discordbot.handler;
 
-import com.google.common.base.Charsets;
 import me.monica.cat.discordbot.Main;
 import me.monica.cat.discordbot.util.ConfigUtil;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -12,9 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,13 +29,13 @@ public class MinecraftMessageHandler {
     }
 
     public boolean handle(Player player, String msg) {
-        if (msg.startsWith("@") || msg.startsWith("#")) return false;
+        if (msg.startsWith("@") || msg.startsWith("#")) return true;
         String prefix = handlePrefix(player);
         if (msg.contains("[i]")) {
             ItemStack item = player.getInventory().getItemInMainHand();
-            if (item==null) {
+            if (item.getType() == Material.AIR) {
                 Main.getPlugin().toDiscordMainTextChannel(msg);
-                return true;
+                return false;
             }
             StringBuilder tellraw = new StringBuilder();
             tellraw.append("tellraw @a [");
@@ -48,6 +45,7 @@ public class MinecraftMessageHandler {
             if (msg.equals("[i]")) {
                 tellraw.append(dealItem(item));
             } else {
+                if (msg.endsWith("\\[i]")) msg += ".";
                 pure = msg.split("\\[i]");
                 tellraw.append(dealPureString(prefix)).append(",");
                 for (int i = 0, len = pure.length; i < len; i++) {
@@ -63,11 +61,11 @@ public class MinecraftMessageHandler {
             if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
                 displayName = item.getType().toString();
             else displayName = item.getItemMeta().getDisplayName();
-            msg = msg.replaceAll("\\[i]","["+displayName+"]");
+            msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
         }
 
         if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
-        return false;
+        return true;
     }
 
     private String dealPureString(String msg) {
@@ -77,7 +75,6 @@ public class MinecraftMessageHandler {
     private String dealItem(ItemStack item) {
         String displayName;
         String type = item.getType().toString();
-        if (type.equals("AIR")) return dealPureString("AIR");
         int amount = item.getAmount();
         StringBuilder finalLore = new StringBuilder();
         if (!item.hasItemMeta()) {
@@ -105,10 +102,10 @@ public class MinecraftMessageHandler {
 
     private String handlePrefix(Player player) {
         if (player.isOp())
-            return "§8[§a管理§8]§r " + ChatColor.translateAlternateColorCodes('&', OPNickname.getString(player.getName())) + "§r §7-§r §c" + player.getName() + "§r > ";
+            return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', OPNickname.getString(player.getName())) + "§r §7-§r §c" + player.getName() + "§r > ";
         try {
-            File file = new File(Main.getPlugin().getDataFolder().getParentFile().getCanonicalPath()+"\\players\\"+player.getName()+".yml");
-            FileConfiguration config =  YamlConfiguration.loadConfiguration(file);
+            File file = new File(Main.getPlugin().getDataFolder().getParentFile().getCanonicalPath() + "\\players\\" + player.getName() + ".yml");
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             String career = config.getString("玩家職業");
             int level = config.getInt("玩家等級");
             return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §c" + player.getName() + "§r > ";

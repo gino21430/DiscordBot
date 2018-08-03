@@ -26,13 +26,13 @@ import java.util.*;
 public final class Main extends JavaPlugin {
 
     public JDA jda;
+    public FileConfiguration config;
+    public Map<String, String> verify;
     private Guild guild;
     private GuildController gc;
     private TextChannel mainText;
-    public FileConfiguration config;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
-    public Map<String, String> verify;
     private FileConfiguration linkedUser;
 
     public static Main getPlugin() {
@@ -45,13 +45,13 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-		init();
+        init();
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
-        startBot(Bukkit.getConsoleSender(),true);
+        startBot(Bukkit.getConsoleSender(), true);
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
         //if (jda != null && jda.getStatus()==JDA.Status.CONNECTED)
@@ -59,7 +59,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (jda != null && jda.getStatus()==JDA.Status.CONNECTED) {
+        if (jda != null && jda.getStatus() == JDA.Status.CONNECTED) {
             mainText.sendMessage("**Server Stopping**").queue();
             stopBot(Bukkit.getConsoleSender());
         }
@@ -77,24 +77,23 @@ public final class Main extends JavaPlugin {
             } else return;
         }
         String token = config.getString("Token");
-		Thread init1 = new Thread(()->{
-			try{
-				jda = new JDABuilder(AccountType.BOT)
-					.setToken(token)
-					.addEventListener(new DiscordGuildMessageListener())
-					.addEventListener(new DiscordPrivateMessageListener())
-					.buildBlocking(JDA.Status.CONNECTED);
+        Thread init1 = new Thread(() -> {
+            try {
+                jda = new JDABuilder(AccountType.BOT)
+                        .setToken(token)
+                        .addEventListener(new DiscordGuildMessageListener())
+                        .addEventListener(new DiscordPrivateMessageListener())
+                        .buildBlocking(JDA.Status.CONNECTED);
                 mainText = jda.getTextChannelById(config.getString("Channel"));
                 guild = mainText.getGuild();
                 gc = new GuildController(guild);
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
                 if (isStartUp) mainText.sendMessage("**Server Starting**").queue();
-			}
-			catch (LoginException | InterruptedException e){
-				e.printStackTrace();
-			}
-		});
-		init1.start();
+            } catch (LoginException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        init1.start();
     }
 
     private void stopBot(CommandSender sender) {
@@ -119,11 +118,11 @@ public final class Main extends JavaPlugin {
         dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
     }
-	
-	public void reload(CommandSender sender) {
-		stopBot(sender);
-		init();
-	}
+
+    public void reload(CommandSender sender) {
+        stopBot(sender);
+        init();
+    }
 
     public void saveConfig() {
         try {
@@ -142,7 +141,7 @@ public final class Main extends JavaPlugin {
                 if (args.length < 1) return false;
                 switch (args[0].toLowerCase()) {
                     case "start":
-                        startBot(sender,false);
+                        startBot(sender, false);
                         return true;
                     case "stop":
                         stopBot(sender);
