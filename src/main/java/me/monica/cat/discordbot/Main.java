@@ -51,10 +51,10 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
-        startBot(Bukkit.getConsoleSender());
+        startBot(Bukkit.getConsoleSender(),true);
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
-        mainText.sendMessage("**Server Starting**").queue();
+        //if (jda != null && jda.getStatus()==JDA.Status.CONNECTED)
     }
 
     @Override
@@ -65,7 +65,7 @@ public final class Main extends JavaPlugin {
         }
     }
 
-    private void startBot(CommandSender sender) {
+    private void startBot(CommandSender sender, boolean isStartUp) {
         if (jda != null) {
             if (jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
                 sender.sendMessage("It is SHUTTING DOWN!");
@@ -77,35 +77,24 @@ public final class Main extends JavaPlugin {
             } else return;
         }
         String token = config.getString("Token");
-            
-		Thread init2 = new Thread(()->{
-			mainText = jda.getTextChannelById(config.getString("Channel"));
-			guild = mainText.getGuild();
-			gc = new GuildController(guild);
-			mainText.sendMessage(":white_check_mark: Bot was started").queue();
-		});
-			
 		Thread init1 = new Thread(()->{
 			try{
 				jda = new JDABuilder(AccountType.BOT)
 					.setToken(token)
 					.addEventListener(new DiscordGuildMessageListener())
 					.addEventListener(new DiscordPrivateMessageListener())
-					.buildBlocking();
+					.buildBlocking(JDA.Status.CONNECTED);
+                mainText = jda.getTextChannelById(config.getString("Channel"));
+                guild = mainText.getGuild();
+                gc = new GuildController(guild);
+                mainText.sendMessage(":white_check_mark: Bot was started").queue();
+                if (isStartUp) mainText.sendMessage("**Server Starting**").queue();
 			}
 			catch (LoginException | InterruptedException e){
 				e.printStackTrace();
 			}
-			init2.notify();
 		});
-			
-		try{
-			init1.start();
-			init2.wait();
-		}
-		catch (InterruptedException e){
-			e.printStackTrace();
-		}
+		init1.start();
     }
 
     private void stopBot(CommandSender sender) {
@@ -153,7 +142,7 @@ public final class Main extends JavaPlugin {
                 if (args.length < 1) return false;
                 switch (args[0].toLowerCase()) {
                     case "start":
-                        startBot(sender);
+                        startBot(sender,false);
                         return true;
                     case "stop":
                         stopBot(sender);

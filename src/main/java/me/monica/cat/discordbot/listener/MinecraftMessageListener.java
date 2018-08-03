@@ -13,6 +13,6 @@ public class MinecraftMessageListener implements Listener {
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
         String messsge = e.getMessage();
         MinecraftMessageHandler minecraftMessageHandler = new MinecraftMessageHandler();
-        minecraftMessageHandler.handle(e.getPlayer(), messsge);
+        e.setCancelled(minecraftMessageHandler.handle(e.getPlayer(), messsge));
     }
 }
