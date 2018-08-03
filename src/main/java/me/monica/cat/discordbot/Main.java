@@ -45,19 +45,13 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        ConfigUtil configUtil = new ConfigUtil();
-        config = configUtil.loadConfig("config.yml");
+		init();
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
         startBot(Bukkit.getConsoleSender());
-        //mainText.sendMessage("**Server Start Running**").queue();
-        verify = new HashMap<>();
-        uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
-        dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
-        linkedUser = configUtil.loadConfig("linkedUsers.yml");
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
         mainText.sendMessage("**Server Starting**").queue();
@@ -65,7 +59,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (jda != null) {
+        if (jda != null && jda.getStatus()==JDA.Status.CONNECTED) {
             mainText.sendMessage("**Server Stopping**").queue();
             stopBot(Bukkit.getConsoleSender());
         }
@@ -82,20 +76,36 @@ public final class Main extends JavaPlugin {
                 }
             } else return;
         }
-        try {
-            String token = config.getString("Token");
-            jda = new JDABuilder(AccountType.BOT)
-                    .setToken(token)
-                    .addEventListener(new DiscordGuildMessageListener())
-                    .addEventListener(new DiscordPrivateMessageListener())
-                    .buildBlocking();
-            mainText = jda.getTextChannelById(config.getString("Channel"));
-            guild = mainText.getGuild();
-            gc = new GuildController(guild);
-            mainText.sendMessage(":white_check_mark: Bot was started").queue();
-        } catch (LoginException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        String token = config.getString("Token");
+            
+		Thread init2 = new Thread(()->{
+			mainText = jda.getTextChannelById(config.getString("Channel"));
+			guild = mainText.getGuild();
+			gc = new GuildController(guild);
+			mainText.sendMessage(":white_check_mark: Bot was started").queue();
+		});
+			
+		Thread init1 = new Thread(()->{
+			try{
+				jda = new JDABuilder(AccountType.BOT)
+					.setToken(token)
+					.addEventListener(new DiscordGuildMessageListener())
+					.addEventListener(new DiscordPrivateMessageListener())
+					.buildBlocking();
+			}
+			catch (LoginException | InterruptedException e){
+				e.printStackTrace();
+			}
+			init2.notify();
+		});
+			
+		try{
+			init1.start();
+			init2.wait();
+		}
+		catch (InterruptedException e){
+			e.printStackTrace();
+		}
     }
 
     private void stopBot(CommandSender sender) {
@@ -120,6 +130,11 @@ public final class Main extends JavaPlugin {
         dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
     }
+	
+	public void reload(CommandSender sender) {
+		stopBot(sender);
+		init();
+	}
 
     public void saveConfig() {
         try {
