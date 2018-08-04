@@ -201,7 +201,7 @@ public final class Main extends JavaPlugin {
 
     public void toSendMessageToMultilayers(String authorName, String msg, List<String> uuids) {
         for (String uuid : uuids) {
-            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("§8[§r§aDiscord§r§8]§r §e" + authorName + "§r > " + msg);
+            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("§8[§r§bDiscord§r§8]§r §e" + authorName + "§r > " + msg);
         }
     }
 

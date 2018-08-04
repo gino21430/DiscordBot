@@ -1,11 +1,17 @@
 package me.monica.cat.discordbot.listener;
 
 
+import me.monica.cat.discordbot.Main;
 import me.monica.cat.discordbot.handler.MinecraftMessageHandler;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+
+import java.io.File;
 
 public class MinecraftMessageListener implements Listener {
 
@@ -13,6 +19,14 @@ public class MinecraftMessageListener implements Listener {
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
         String messsge = e.getMessage();
         MinecraftMessageHandler minecraftMessageHandler = new MinecraftMessageHandler();
-        e.setCancelled(minecraftMessageHandler.handle(e.getPlayer(), messsge));
+        File file = new File(Main.getPlugin().getDataFolder().getParentFile().getPath() + "\\players\\" + e.getPlayer().getName() + ".yml");
+        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+        if (config.getString("高級會員").equals("無"))
+            e.setMessage(ChatColor.stripColor(messsge));
+        boolean bl = minecraftMessageHandler.handle(e.getPlayer(), messsge);
+        e.setCancelled(bl);
+
+
+
     }
 }

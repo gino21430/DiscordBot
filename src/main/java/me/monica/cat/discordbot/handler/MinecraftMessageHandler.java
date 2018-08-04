@@ -32,6 +32,7 @@ public class MinecraftMessageHandler {
         if (msg.startsWith("@") || msg.startsWith("#")) return true;
         String prefix = handlePrefix(player);
         if (msg.contains("[i]")) {
+            Main.log("He tell a Item");
             ItemStack item = player.getInventory().getItemInMainHand();
             if (item.getType() == Material.AIR) {
                 Main.getPlugin().toDiscordMainTextChannel(msg);
@@ -45,26 +46,45 @@ public class MinecraftMessageHandler {
             if (msg.equals("[i]")) {
                 tellraw.append(dealItem(item));
             } else {
-                if (msg.endsWith("\\[i]")) msg += ".";
+                Main.log("BEFORE msg: \"" + msg + "\"");
+                if (msg.endsWith("[i]")) msg += " ";
+                if (msg.startsWith("[i]")) msg = " " + msg;
+                Main.log("AFTER msg: \"" + msg + "\"");
                 pure = msg.split("\\[i]");
                 tellraw.append(dealPureString(prefix)).append(",");
                 for (int i = 0, len = pure.length; i < len; i++) {
-                    Main.log("pure[" + i + "]: " + pure[i]);
-                    tellraw.append(dealPureString(pure[i]));
-                    if (i + 1 < len) tellraw.append(",").append(dealItem(item)).append(",");
+                    Main.log("pure[" + i + "]: \"" + pure[i] + "\"");
+                    if (!pure[i].equals(" ")) {
+                        tellraw.append(dealPureString(pure[i]));
+                        if (i + 1 < len) { //後面還有咚咚
+                            tellraw.append(",").append(dealItem(item));
+                            if (!pure[i + 1].equals(" ")) //後面還有字串
+                                tellraw.append(",");
+                        }
+                    } else { //現在是" "
+                        if (i + 1 < len) { //是第一個，後面還有咚咚
+                            Main.log("pure[i+1]: \"" + pure[i + 1] + "\"");
+                            tellraw.append(dealItem(item));
+                            if (!pure[i + 1].equals(" ")) //後面還有字串
+                                tellraw.append(",");
+                        }
+                    }
                 }
             }
             tellraw.append("]");
-            Main.log("tellraw: " + tellraw.toString());
+            Main.log("TELLRAW: " + tellraw.toString());
             getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
             String displayName;
             if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
                 displayName = item.getType().toString();
             else displayName = item.getItemMeta().getDisplayName();
             msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
+            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
+        } else {
+            Main.log("Just a message");
+            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
+            return false;
         }
-
-        if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
         return true;
     }
 
@@ -108,6 +128,8 @@ public class MinecraftMessageHandler {
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             String career = config.getString("玩家職業");
             int level = config.getInt("玩家等級");
+            if (!config.getString("高級會員").equals("無"))
+                return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §b" + player.getName() + "§r > ";
             return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §c" + player.getName() + "§r > ";
         } catch (IOException e) {
             e.printStackTrace();
