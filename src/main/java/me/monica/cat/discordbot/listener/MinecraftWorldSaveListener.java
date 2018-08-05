@@ -12,7 +12,7 @@ public class MinecraftWorldSaveListener implements Listener {
     public void onWorldSave(WorldSaveEvent e) {
         if (Main.getPlugin().config.getBoolean("Save")) {
             Main.getPlugin().saveConfig();
-            Main.getPlugin().toBroadcastToMinecraft("正在儲存設定檔...");
+            Main.getPlugin().toBroadcastToMinecraft("[§bDiscordBot§r] §6正在儲存設定檔...");
         }
     }
 }

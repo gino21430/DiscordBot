@@ -28,18 +28,23 @@ public class MinecraftMessageHandler {
         OPNickname = configUtil.loadConfig("OPNickname.yml");
     }
 
+    public void save() {
+        try {
+            OPNickname.save(new File(Main.getPlugin().getDataFolder(),"OPNickname.yml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public boolean handle(Player player, String msg) {
-        if (msg.startsWith("@") || msg.startsWith("#")) return true;
+        if (msg.startsWith("@") || msg.startsWith("#")) return false;
         String prefix = handlePrefix(player);
-        if (msg.contains("[i]")) {
-            Main.log("He tell a Item");
-            ItemStack item = player.getInventory().getItemInMainHand();
-            if (item.getType() == Material.AIR) {
-                Main.getPlugin().toDiscordMainTextChannel(msg);
-                return false;
-            }
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (msg.contains("[i]") && item.getType() != Material.AIR) {
+            Main.log(player.getName()+" tell a Item");
             StringBuilder tellraw = new StringBuilder();
             tellraw.append("tellraw @a [");
+
             String[] pure;
 
             // 處理物品
@@ -80,10 +85,9 @@ public class MinecraftMessageHandler {
             else displayName = item.getItemMeta().getDisplayName();
             msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
             if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
-        } else {
-            Main.log("Just a message");
-            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
-            return false;
+        } else { //一般對話
+            Main.getPlugin().toBroadcastToMinecraft(prefix+msg);
+            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix+msg));
         }
         return true;
     }
@@ -121,8 +125,11 @@ public class MinecraftMessageHandler {
     }
 
     private String handlePrefix(Player player) {
-        if (player.isOp())
-            return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', OPNickname.getString(player.getName())) + "§r §7-§r §c" + player.getName() + "§r > ";
+        if (player.isOp()) {
+            String nickname = OPNickname.getString(player.getUniqueId().toString());
+            if (nickname==null) nickname = "管理人員";
+            return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
+        }
         try {
             File file = new File(Main.getPlugin().getDataFolder().getParentFile().getCanonicalPath() + "\\players\\" + player.getName() + ".yml");
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -135,5 +142,9 @@ public class MinecraftMessageHandler {
             e.printStackTrace();
             return "§l§c[Prefix錯誤]§r > ";
         }
+    }
+
+    public void setOPNickname(Player player, String nickname) {
+        OPNickname.set(player.getUniqueId().toString(),nickname);
     }
 }

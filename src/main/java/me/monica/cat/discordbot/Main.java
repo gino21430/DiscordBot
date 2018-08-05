@@ -8,7 +8,6 @@ import me.monica.cat.discordbot.util.ConfigUtil;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.GuildController;
 import org.bukkit.Bukkit;
@@ -31,9 +30,8 @@ public final class Main extends JavaPlugin {
     private Guild guild;
     private GuildController gc;
     private TextChannel mainText;
-    private FileConfiguration dcid2uuid;
-    private FileConfiguration uuid2dcid;
-    private FileConfiguration linkedUser;
+    private FileConfiguration dcidXuuid;
+    public FileConfiguration linkedUser;
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
@@ -52,8 +50,6 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
         startBot(Bukkit.getConsoleSender(), true);
-        DiscordMessageHandler.init();
-        MinecraftMessageHandler.init();
         //if (jda != null && jda.getStatus()==JDA.Status.CONNECTED)
     }
 
@@ -90,9 +86,11 @@ public final class Main extends JavaPlugin {
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
                 if (isStartUp) mainText.sendMessage("**Server Starting**").queue();
             } catch (LoginException | InterruptedException e) {
+                log("Error while JDA init");
                 e.printStackTrace();
             }
         });
+        init1.setName("JDAInit");
         init1.start();
     }
 
@@ -114,21 +112,24 @@ public final class Main extends JavaPlugin {
         ConfigUtil configUtil = new ConfigUtil();
         config = configUtil.loadConfig("config.yml");
         verify = new HashMap<>();
-        uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
-        dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
+        dcidXuuid = configUtil.loadConfig("dcidXuuid.yml");
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
+        DiscordMessageHandler.init();
+        MinecraftMessageHandler.init();
     }
 
-    public void reload(CommandSender sender) {
+    private void reload(CommandSender sender) {
         stopBot(sender);
         init();
     }
 
     public void saveConfig() {
         try {
-            uuid2dcid.save(new File(getDataFolder(), "uuid2dcid.yml"));
-            uuid2dcid.save(new File(getDataFolder(), "dcid2uuid.yml"));
+            dcidXuuid.save(new File(getDataFolder(), "dcidXuuid.yml"));
+            dcidXuuid.save(new File(getDataFolder(), "dcid2uuid.yml"));
             linkedUser.save(new File(getDataFolder(), "linkedUsers.yml"));
+            MinecraftMessageHandler mmh = new MinecraftMessageHandler();
+            mmh.save();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -148,13 +149,15 @@ public final class Main extends JavaPlugin {
                         return true;
                     case "reload":
                         init();
+                        reload(sender);
                         return true;
                     case "verify":
                         if (sender instanceof Player) verifyMinecraft((Player) sender);
                         return true;
                     case "delmsg":
-                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
-                        else deleteAllMessages(args[1], sender.getName());
+                        if (args.length < 3) throw new InsuffcientArgumentsException(3);
+                        if (!args[2].matches("[0-9]+")) return false;
+                        else deleteAllMessages(args[1], sender.getName(),Integer.valueOf(args[2]));
                         return true;
                     case "mute":
                         if (!(sender instanceof Player)) return false;
@@ -174,6 +177,12 @@ public final class Main extends JavaPlugin {
                             }
                         }
                         return true;
+                    case "nick":
+                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
+                        if (sender instanceof Player) {
+                            MinecraftMessageHandler mmh = new MinecraftMessageHandler();
+                            mmh.setOPNickname((Player) sender, args[1]);
+                        }
                     default:
                         return false;
                 }
@@ -196,7 +205,7 @@ public final class Main extends JavaPlugin {
     }
 
     public void toBroadcastToMinecraft(String msg) {
-        getServer().broadcastMessage("[§c系統公告§r] " + msg);
+        getServer().broadcastMessage(msg);
     }
 
     public void toSendMessageToMultilayers(String authorName, String msg, List<String> uuids) {
@@ -209,22 +218,23 @@ public final class Main extends JavaPlugin {
         player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
     }
 
-    private void deleteAllMessages(String channelID, String name) {
+    private void deleteAllMessages(String channelID, String name,int max) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
-        while (true) {
+        int count = 0;
+        while (count<max) {
             List<Message> toDel = new ArrayList<>();
             for (Message msg : channel.getIterableHistory()) {
                 toDel.add(msg);
+                count++;
+                if (count==max) break;
                 if (toDel.size() == 99) break;
                 //Discord.Log("To delete message: "+msg.getContentDisplay());
             }
             if (toDel.size() < 2) break;
             channel.deleteMessages(toDel).queue();
-            MessageBuilder messageBuilder = new MessageBuilder();
-            messageBuilder.append("All messages was DELETE by ").append(name);
-            channel.sendMessage(messageBuilder.build()).queue();
         }
+        channel.sendMessage("All messages was DELETE by "+name).queue();
     }
 
     public int verifyStart(User author, String minecraftName) {
@@ -243,10 +253,12 @@ public final class Main extends JavaPlugin {
         String name = player.getName();
         String dcid = verify.get(name);
         if (dcid != null) {
-            linkedUser.set(dcid, name);
             verify.remove(name, dcid);
-            Role playerRole = jda.getRoleById("roleid");
-            Role opRole = jda.getRoleById("roleid");
+            linkedUser.set(dcid, name);
+            log("linked dcid: "+dcid+",uuid: "+player.getUniqueId().toString());
+            dcidXuuid.set(player.getUniqueId().toString(),dcid);
+            Role playerRole = jda.getRoleById(config.getString("PlayerRole"));
+            Role opRole = jda.getRoleById(config.getString("OPRole"));
             Member member = guild.getMemberById(dcid);
             if (player.isOp()) gc.addRolesToMember(member, opRole).queue();
             else gc.addRolesToMember(member, playerRole).queue();
@@ -259,13 +271,21 @@ public final class Main extends JavaPlugin {
         String uuid, dcid;
         if (isFromMinecraft) {
             uuid = getServer().getPlayer(input).getUniqueId().toString();
-            dcid = uuid2dcid.getString(uuid);
+            dcid = dcidXuuid.getString(uuid);
         } else {
             dcid = input;
             uuid = dcid2uuid.getString(dcid);
         }
-        uuid2dcid.set(uuid, null);
-        dcid2uuid.set(dcid, null);
+        if (dcid==null) {
+            log("dcid is null");
+            return;
+        }
+        if (uuid==null) {
+            log("uuid is null");
+            return;
+        }
+        log("dcid: "+dcid+", uuid: "+uuid);
+        dcidXuuid.set(sdadauuid, null);
         linkedUser.set(dcid, null);
         Member member = guild.getMemberById(dcid);
         gc.removeRolesFromMember(member, member.getRoles()).queue();
@@ -274,11 +294,20 @@ public final class Main extends JavaPlugin {
     public void detectNameChanged(Player player) {
         String name = player.getName();
         String uuid = player.getUniqueId().toString();
-        String dcid = uuid2dcid.getString(uuid);
+        sdsString dcid = dcidXuuid.getString(uuid);
         if (dcid == null) return;
         if (linkedUser.getString(dcid).equals(name)) return;
         linkedUser.set(dcid, name);
         player.sendMessage("Detecting your name changed!");
+    }
+
+    private String xorEncode(String uuid, String dcid) {
+        dcid = dcid+dcid;
+        StringBuilder tmp = new StringBuilder();
+        for (int i=0;i<36;i++) {
+            tmp.append(dcid.charAt(i) ^ uuid.charAt(i));
+        }
+        return tmp.toString();
     }
 
 }

@@ -1,3 +1,9 @@
+# Your bot's token
 Token: "your bot token"
-Channel: "the channel which bot will listen to"
+# The channel you want to sync with minecraft
+Channel: "123456789123456789"
+# The role when a player success linked will get
+PlayerRole: "123456789123456789"
+# The role when a OP success linked will get
+OPRole: "123456789123456789"
 Save: false

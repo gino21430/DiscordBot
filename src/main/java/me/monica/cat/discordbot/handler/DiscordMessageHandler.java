@@ -16,15 +16,17 @@ public class DiscordMessageHandler {
 
     private static boolean dc2mc;
     private static List<String> uuids;
+    private static Main main;
 
     public static void init() {
+        main = Main.getPlugin();
         dc2mc = true;
         uuids = new ArrayList<>();
     }
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(author.getName(), ChatColor.stripColor(msg), uuids);
+        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(main.linkedUser.getString(author.getId()), ChatColor.stripColor(msg), uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
@@ -37,11 +39,12 @@ public class DiscordMessageHandler {
                 if (str.length < 2 || str.length > 2) channel.sendMessage("請輸入您的minecraft名稱.").queue();
                 switch (Main.getPlugin().verifyStart(author, str[1])) {
                     case 0:
-                        channel.sendMessage(">>> 請盡速於遊戲裡輸入\"/discord link\"完成驗證 <<<").queue();
-                        new Thread(() -> {
+                        channel.sendMessage(">>> 請盡速於遊戲裡輸入\"/discord verify\"完成驗證 <<<").queue();
+                        Thread thread = new Thread(() -> {
                             Date date = new Date();
-                            long now = date.getTime();
-                            while (new Date().getTime() <= now + 60) {
+                            long startTime = date.getTime();
+                            Main.log("開始計時; "+startTime);
+                            while (date.getTime() <= startTime + 60000) {
                                 if (!Main.getPlugin().verify.containsValue(author.getId())) {
                                     channel.sendMessage("您已完成驗證!").queue();
                                     return;
@@ -54,7 +57,8 @@ public class DiscordMessageHandler {
                             }
                             Main.getPlugin().verify.remove(str[1], author.getId());
                             channel.sendMessage("[Error] 超過60秒未於遊戲裡完成驗證，驗證取消").queue();
-                        }).start();
+                        });
+                        thread.start();
                         break;
                     case 1:
                         channel.sendMessage("[Error] 稍早有其他用戶對此角色進行驗證程序").queue();
