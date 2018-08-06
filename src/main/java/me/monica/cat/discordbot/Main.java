@@ -98,7 +98,8 @@ public final class Main extends JavaPlugin {
                 gc = new GuildController(guild);
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
                 if (isStartUp) mainText.sendMessage("**Server Starting**").queue();
-                ServerStatusHandler.runTimerTask();
+                ServerStatusHandler serverStatusHandler = new ServerStatusHandler();
+                serverStatusHandler.runTimerTask();
             } catch (LoginException | InterruptedException e) {
                 log("Error while JDA init");
                 e.printStackTrace();
@@ -132,6 +133,7 @@ public final class Main extends JavaPlugin {
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
+        ServerStatusHandler.init();
     }
 
     private void reload(CommandSender sender) {

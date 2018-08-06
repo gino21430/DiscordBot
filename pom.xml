@@ -82,12 +82,5 @@
             <version>3.7.1_386</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>net.minecraft</groupId>
-            <artifactId>MinecraftServer</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/spigot-1.11.2.jar</systemPath>
-        </dependency>
     </dependencies>
 </project>

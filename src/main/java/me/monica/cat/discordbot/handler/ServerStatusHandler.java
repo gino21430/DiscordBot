@@ -15,7 +15,17 @@ import static org.bukkit.Bukkit.getServer;
 
 public class ServerStatusHandler {
 
-    public static void runTimerTask() {
+    private static double tps;
+    private static int updatePeriod;
+
+
+    public static void init() {
+        tps = 0;
+        updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
+        if (updatePeriod < 10) updatePeriod = 10;
+    }
+
+    public void runTimerTask() {
         Main main = Main.getPlugin();
         TextChannel channel = main.getJda().getTextChannelById(main.config.getString("StatusChannel"));
         Timer timer = new Timer();
@@ -29,48 +39,56 @@ public class ServerStatusHandler {
                 }
                 if (toDel.size() == 1) channel.deleteMessageById(toDel.get(0).getId()).queue();
                 else if (toDel.size() > 1) channel.deleteMessages(toDel).queue();
-                Main.log("Update server info");
                 channel.sendMessage(getData()).queue();
             }
         };
-        timer.schedule(task, 10 * 1000, 30 * 1000);
+        timer.schedule(task, 20 * 1000, updatePeriod * 1000);
     }
 
 
-    private static String getData() {
+    private String getData() {
         Runtime lRuntime = Runtime.getRuntime();
-        long freeM = lRuntime.freeMemory() / 1024 / 1024;
-        long maxM = lRuntime.maxMemory() / 1024 / 1024;
-        long tM = lRuntime.totalMemory() / 1024 / 1024;
+        int aM = (int) lRuntime.freeMemory() / 1024 / 1024;
+        int mM = (int) lRuntime.maxMemory() / 1024 / 1024;
+        int tM = (int) lRuntime.totalMemory() / 1024 / 1024;
         OperatingSystemMXBean osmb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         java.lang.management.ThreadMXBean t = ManagementFactory.getThreadMXBean();
-
+        //cpu
         DecimalFormat df = new DecimalFormat("#.##");
         String cpu = df.format(osmb.getSystemCpuLoad() * 100);
-        Date date = new Date();
+
+        //chunks
         int chunks = 0;
         for (World world : getServer().getWorlds())
             chunks += world.getLoadedChunks().length;
         int players = Bukkit.getOnlinePlayers().size();
-        Main.log("System.currentTimeMillis=" + System.currentTimeMillis());
 
+        //tps
         long startTime = System.currentTimeMillis();
-        getServer().getScheduler().scheduleSyncDelayedTask(Main.getPlugin(), new Runnable() {
-            public void run() {
-                long endTime = System.currentTimeMillis();
-
+        getServer().getScheduler().scheduleSyncDelayedTask(Main.getPlugin(), () -> {
+            synchronized (this) {
+                double tmp = System.currentTimeMillis() - startTime;
+                tps = 10.0 * 1000 / tmp;
+                if (tps > 20.0) tps = 20.0;
             }
-        }, 20L); //This is the delay, in ticks, until the thread is executed, since the main threads ticks 20 times per second, 60 ticks is 3 seconds.
+        }, 10L);
 
-
-        int tps = (int) (System.currentTimeMillis() / 50L);
-        return "==========" + date.toString() + "==========" + "\n" +
-                "spigot/jvm/max : " + t.getThreadCount() + "/" + t.getDaemonThreadCount() + "/" + t.getPeakThreadCount() + "\n" +
-                "Memory | total/available/max：" + tM + "/" + freeM + "/" + maxM + " MB" + "\n" +
-                "CPU      | " + cpu + " %" + "\n" +
-                "Players | " + players + "\n" +
-                "Chunks  | " + chunks + "\n" +
-                "TPS      | " + tps + "\n" +
-                "==========================================";
+        return color(t.getThreadCount(), t.getDaemonThreadCount(), t.getPeakThreadCount(),
+                tM, aM, mM, cpu, players, chunks);
     }
+
+    private String color(int t1, int t2, int t3, int tM, int aM, int mM, String cpu, int players, int chunks) {
+        Date date = new Date();
+        String info = "==========" + date.toString() + "==========" + "\n" +
+                "spigot/jvm/max : %s/%s/%s\n" +
+                "Memory (total/available/max)：%s/%s/%s MB" + "\n" +
+                "CPU : %s %" + "\n" +
+                "Players : %s\n" +
+                "Chunks : %s\n" +
+                "TPS : %s\n" +
+                "==========================================";
+        //if (tM > mM * 0.8)
+        return String.format(info, t1, t2, t3);
+    }
+
 }
