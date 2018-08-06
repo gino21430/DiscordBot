@@ -3,6 +3,7 @@ package me.monica.cat.discordbot;
 
 import me.monica.cat.discordbot.handler.DiscordMessageHandler;
 import me.monica.cat.discordbot.handler.MinecraftMessageHandler;
+import me.monica.cat.discordbot.handler.ServerStatusHandler;
 import me.monica.cat.discordbot.listener.*;
 import me.monica.cat.discordbot.util.ConfigUtil;
 import net.dv8tion.jda.core.AccountType;
@@ -30,11 +31,16 @@ public final class Main extends JavaPlugin {
     private Guild guild;
     private GuildController gc;
     private TextChannel mainText;
-    private FileConfiguration dcidXuuid;
+    private FileConfiguration dcid2uuid;
+    private FileConfiguration uuid2dcid;
     public FileConfiguration linkedUser;
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
+    }
+
+    public JDA getJda() {
+        return this.jda;
     }
 
     public static void log(String msg) {
@@ -55,24 +61,31 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (jda != null && jda.getStatus() == JDA.Status.CONNECTED) {
-            mainText.sendMessage("**Server Stopping**").queue();
-            stopBot(Bukkit.getConsoleSender());
-        }
-    }
-
-    private void startBot(CommandSender sender, boolean isStartUp) {
-        if (jda != null) {
-            if (jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
-                sender.sendMessage("It is SHUTTING DOWN!");
+        Thread thread = new Thread(() -> {
+            if (jda != null && jda.getStatus() == JDA.Status.CONNECTED) {
+                mainText.sendMessage("**Server Stopping**").queue();
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } else return;
+                stopBot(Bukkit.getConsoleSender());
+            }
+        });
+
+    }
+
+    private void startBot(CommandSender sender, boolean isStartUp) {
+        if (jda != null) {
+            log("jda is not NULL");
+            if (jda.getStatus() == JDA.Status.SHUTTING_DOWN) {
+                sender.sendMessage("It is SHUTTING DOWN!");
+                return;
+            } else if (jda.getStatus() != JDA.Status.SHUTDOWN) return;
         }
+
         String token = config.getString("Token");
+        log("ready to starting");
         Thread init1 = new Thread(() -> {
             try {
                 jda = new JDABuilder(AccountType.BOT)
@@ -85,6 +98,7 @@ public final class Main extends JavaPlugin {
                 gc = new GuildController(guild);
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
                 if (isStartUp) mainText.sendMessage("**Server Starting**").queue();
+                ServerStatusHandler.runTimerTask();
             } catch (LoginException | InterruptedException e) {
                 log("Error while JDA init");
                 e.printStackTrace();
@@ -106,13 +120,15 @@ public final class Main extends JavaPlugin {
         toDiscordMainTextChannel(":no_entry: Bot was stopped by " + name);
         saveConfig();
         jda.shutdown();
+        jda = null;
     }
 
     private void init() {
         ConfigUtil configUtil = new ConfigUtil();
         config = configUtil.loadConfig("config.yml");
         verify = new HashMap<>();
-        dcidXuuid = configUtil.loadConfig("dcidXuuid.yml");
+        dcid2uuid = configUtil.loadConfig("dcid2uuid.yml");
+        uuid2dcid = configUtil.loadConfig("uuid2dcid.yml");
         linkedUser = configUtil.loadConfig("linkedUsers.yml");
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
@@ -125,8 +141,8 @@ public final class Main extends JavaPlugin {
 
     public void saveConfig() {
         try {
-            dcidXuuid.save(new File(getDataFolder(), "dcidXuuid.yml"));
-            dcidXuuid.save(new File(getDataFolder(), "dcid2uuid.yml"));
+            dcid2uuid.save(new File(getDataFolder(), "dcid2uuid.yml"));
+            uuid2dcid.save(new File(getDataFolder(), "uuid2dcid.yml"));
             linkedUser.save(new File(getDataFolder(), "linkedUsers.yml"));
             MinecraftMessageHandler mmh = new MinecraftMessageHandler();
             mmh.save();
@@ -154,6 +170,12 @@ public final class Main extends JavaPlugin {
                     case "verify":
                         if (sender instanceof Player) verifyMinecraft((Player) sender);
                         return true;
+                    case "unlink":
+                        if (sender instanceof Player) {
+                            Player player = (Player) sender;
+                            unlink(player.getUniqueId().toString(), true);
+                        }
+                        break;
                     case "delmsg":
                         if (args.length < 3) throw new InsuffcientArgumentsException(3);
                         if (!args[2].matches("[0-9]+")) return false;
@@ -256,7 +278,8 @@ public final class Main extends JavaPlugin {
             verify.remove(name, dcid);
             linkedUser.set(dcid, name);
             log("linked dcid: "+dcid+",uuid: "+player.getUniqueId().toString());
-            dcidXuuid.set(player.getUniqueId().toString(),dcid);
+            uuid2dcid.set(player.getUniqueId().toString(), dcid);
+            dcid2uuid.set(dcid, player.getUniqueId().toString());
             Role playerRole = jda.getRoleById(config.getString("PlayerRole"));
             Role opRole = jda.getRoleById(config.getString("OPRole"));
             Member member = guild.getMemberById(dcid);
@@ -271,7 +294,7 @@ public final class Main extends JavaPlugin {
         String uuid, dcid;
         if (isFromMinecraft) {
             uuid = getServer().getPlayer(input).getUniqueId().toString();
-            dcid = dcidXuuid.getString(uuid);
+            dcid = uuid2dcid.getString(uuid);
         } else {
             dcid = input;
             uuid = dcid2uuid.getString(dcid);
@@ -285,7 +308,8 @@ public final class Main extends JavaPlugin {
             return;
         }
         log("dcid: "+dcid+", uuid: "+uuid);
-        dcidXuuid.set(sdadauuid, null);
+        dcid2uuid.set(dcid, null);
+        uuid2dcid.set(uuid, null);
         linkedUser.set(dcid, null);
         Member member = guild.getMemberById(dcid);
         gc.removeRolesFromMember(member, member.getRoles()).queue();
@@ -294,20 +318,10 @@ public final class Main extends JavaPlugin {
     public void detectNameChanged(Player player) {
         String name = player.getName();
         String uuid = player.getUniqueId().toString();
-        sdsString dcid = dcidXuuid.getString(uuid);
+        String dcid = uuid2dcid.getString(uuid);
         if (dcid == null) return;
         if (linkedUser.getString(dcid).equals(name)) return;
         linkedUser.set(dcid, name);
         player.sendMessage("Detecting your name changed!");
     }
-
-    private String xorEncode(String uuid, String dcid) {
-        dcid = dcid+dcid;
-        StringBuilder tmp = new StringBuilder();
-        for (int i=0;i<36;i++) {
-            tmp.append(dcid.charAt(i) ^ uuid.charAt(i));
-        }
-        return tmp.toString();
-    }
-
 }

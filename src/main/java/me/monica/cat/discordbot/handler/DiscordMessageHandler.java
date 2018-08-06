@@ -36,7 +36,10 @@ public class DiscordMessageHandler {
         String[] str = msg.split(" ");
         switch (str[0]) {
             case "!link":
-                if (str.length < 2 || str.length > 2) channel.sendMessage("請輸入您的minecraft名稱.").queue();
+                if (str.length < 2 || str.length > 2) {
+                    channel.sendMessage("請必須輸入您的minecraft名稱.").queue();
+                    return;
+                }
                 switch (Main.getPlugin().verifyStart(author, str[1])) {
                     case 0:
                         channel.sendMessage(">>> 請盡速於遊戲裡輸入\"/discord verify\"完成驗證 <<<").queue();
@@ -65,6 +68,7 @@ public class DiscordMessageHandler {
                         break;
                     case 2:
                         channel.sendMessage("[Error] " + str[1] + "目前並不在線，請進入伺服器後再試一次").queue();
+                        break;
                     case 3:
                         channel.sendMessage("[Error] 此角色已被其他用戶綁定").queue();
                 }
