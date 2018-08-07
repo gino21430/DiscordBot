@@ -17,19 +17,22 @@ public class ServerStatusHandler {
 
     private static double tps;
     private static int updatePeriod;
+    public static TimerTask task;
+    private static final long startUpTime = System.currentTimeMillis();
 
 
     public static void init() {
-        tps = 0;
         updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
+        Main.log("updatePeriod2: " + updatePeriod);
+        tps = 0;
         if (updatePeriod < 10) updatePeriod = 10;
+        Main.log("updatePeriod2: " + updatePeriod);
     }
 
     public void runTimerTask() {
-        Main main = Main.getPlugin();
-        TextChannel channel = main.getJda().getTextChannelById(main.config.getString("StatusChannel"));
         Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
+        TextChannel channel = Main.getPlugin().getJda().getTextChannelById(Main.getPlugin().config.getString("StatusChannel"));
+        task = new TimerTask() {
             @Override
             public void run() {
                 List<Message> toDel = new ArrayList<>();
@@ -42,7 +45,8 @@ public class ServerStatusHandler {
                 channel.sendMessage(getData()).queue();
             }
         };
-        timer.schedule(task, 20 * 1000, updatePeriod * 1000);
+        Main.log("updatePeriod: " + updatePeriod);
+        timer.schedule(task, 5 * 1000, updatePeriod * 1000);
     }
 
 
@@ -73,11 +77,20 @@ public class ServerStatusHandler {
             synchronized (this) {
                 double tmp = System.currentTimeMillis() - startTime;
                 tps = 10.0 * 1000 / tmp;
-                if (tps > 20.0) tps = 20.00;
+                if (tps > 20.00) tps = 20.00;
             }
         }, 10L);
 
+        //runningTime
+        int second = (int) ((System.currentTimeMillis() - startUpTime) / 1000);
+        int minute = second / 60;
+        second = second % 60;
+        int hour = minute / 60;
+        minute = minute % 60;
+
+
         return "==========" + date.toString() + "==========" + "\n" +
+                "Running time : " + hour + "小時" + minute + "分" + second + "秒" + "\n" +
                 "Thread (spigot/jvm/max) : " + t.getThreadCount() + "/" + t.getDaemonThreadCount() + "/" + t.getPeakThreadCount() + "\n" +
                 "Memory (total/available/max)：" + tM + "/" + aM + "/" + mM + " MB" + "\n" +
                 "CPU : " + cpu + " %" + "\n" +

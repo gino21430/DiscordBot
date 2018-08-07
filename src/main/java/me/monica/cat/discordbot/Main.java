@@ -10,6 +10,7 @@ import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.*;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.managers.GuildController;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -64,15 +65,10 @@ public final class Main extends JavaPlugin {
         Thread thread = new Thread(() -> {
             if (jda != null && jda.getStatus() == JDA.Status.CONNECTED) {
                 mainText.sendMessage("**Server Stopping**").queue();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 stopBot(Bukkit.getConsoleSender());
             }
         });
-
+        thread.start();
     }
 
     private void startBot(CommandSender sender, boolean isStartUp) {
@@ -118,10 +114,14 @@ public final class Main extends JavaPlugin {
         }
         String name = "Console";
         if (sender instanceof Player) name = sender.getName();
-        toDiscordMainTextChannel(":no_entry: Bot was stopped by " + name);
+        try {
+            mainText.sendMessage(":no_entry: Bot was stopped by " + name).complete(false);
+        } catch (RateLimitedException e) {
+            e.printStackTrace();
+        }
+        ServerStatusHandler.task.cancel();
         saveConfig();
         jda.shutdown();
-        jda = null;
     }
 
     private void init() {
