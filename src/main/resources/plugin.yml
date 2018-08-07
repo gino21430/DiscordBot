@@ -4,7 +4,12 @@ main: me.monica.cat.discordbot.Main
 perfix: [DiscordBot]
 commands:
   discord:
-    description: "This is a discord command."
-    usage: "usage: /<command> start|stop|reload|verify|mute"
-    permission: true
-    permission-message: "not Player ? (OAO)"
+    description: "§bDiscord bot command by catMonica."
+    aliases: [dc]
+    usage: "usage: /<command> start|stop|reload|verify|mute|setnick"
+    permission-message: "You do not have /<permission>"
+  color:
+    description: "A color format example"
+    usage: "usage: /<command>"
+    permission-message: "You do not have /<permission>"
+

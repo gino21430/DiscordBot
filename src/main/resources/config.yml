@@ -1,9 +1,7 @@
-# Your bot's token
-Token: "your bot token"
-# The channel you want to sync with minecraft
-Channel: "123456789123456789"
-# The role when a player success linked will get
-PlayerRole: "123456789123456789"
-# The role when a OP success linked will get
-OPRole: "123456789123456789"
+Token: "NDcwNzc5MDEwODMwNDM0MzQ0.DkdM6Q.LSoReoObiWsCkYn8yVLBi62UPyo"
+Channel: "470842970434830363"
+StatusChannel: "471689542085378059"
+PlayerRole: "455310332626468864"
+OPRole: "455314418599723028"
+UpdatePeriod: 10
 Save: false

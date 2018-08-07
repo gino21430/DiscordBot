@@ -77,8 +77,9 @@ public class MinecraftMessageHandler {
                 }
             }
             tellraw.append("]");
-            Main.log("TELLRAW: " + tellraw.toString());
+
             getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
+
             String displayName;
             if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
                 displayName = item.getType().toString();
@@ -127,20 +128,22 @@ public class MinecraftMessageHandler {
     private String handlePrefix(Player player) {
         if (player.isOp()) {
             String nickname = OPNickname.getString(player.getUniqueId().toString());
-            if (nickname == null) nickname = "管理人員";
+            if (nickname == null) nickname = "管理員";
+            else if (player.getName().equals("catMonica"))
+                return "§8[§c神之子§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
             return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
         }
         try {
             File file = new File(Main.getPlugin().getDataFolder().getParentFile().getCanonicalPath() + "\\players\\" + player.getName() + ".yml");
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             String career = config.getString("玩家職業");
-            int level = config.getInt("玩家等級");
+            String level = config.getString("玩家等級");
             if (!config.getString("高級會員").equals("無"))
                 return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §b" + player.getName() + "§r > ";
-            return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §c" + player.getName() + "§r > ";
+            return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §e" + player.getName() + "§r > ";
         } catch (IOException e) {
             e.printStackTrace();
-            return "§l§c[Prefix錯誤]§r > ";
+            return "§l§c[Prefix錯誤]§r §e" + player.getName() + "§r > ";
         }
     }
 

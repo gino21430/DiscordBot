@@ -22,10 +22,8 @@ public class ServerStatusHandler {
 
     public static void init() {
         updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
-        Main.log("updatePeriod2: " + updatePeriod);
         tps = 0;
-        if (updatePeriod < 10) updatePeriod = 10;
-        Main.log("updatePeriod2: " + updatePeriod);
+        if (updatePeriod < 5) updatePeriod = 5;
     }
 
     public void runTimerTask() {
@@ -45,7 +43,7 @@ public class ServerStatusHandler {
             }
         };
         Main.log("updatePeriod: " + updatePeriod);
-        timer.schedule(task, updatePeriod * 1000, updatePeriod * 1000);
+        timer.schedule(task, 30 * 1000, updatePeriod * 1000);
     }
 
 

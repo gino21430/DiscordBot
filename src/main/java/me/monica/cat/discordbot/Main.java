@@ -48,6 +48,10 @@ public final class Main extends JavaPlugin {
         return this.jda;
     }
 
+    public Guild getGuild() {
+        return guild;
+    }
+
     @Override
     public void onEnable() {
         init();
@@ -136,11 +140,6 @@ public final class Main extends JavaPlugin {
         ServerStatusHandler.init();
     }
 
-    private void reload(CommandSender sender) {
-        stopBot(sender);
-        init();
-    }
-
     public void saveConfig() {
         try {
             dcid2uuid.save(new File(getDataFolder(), "dcid2uuid.yml"));
@@ -155,76 +154,104 @@ public final class Main extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        try {
-            if (command.getName().equals("discord")) {
-                if (args.length < 1) return false;
-                switch (args[0].toLowerCase()) {
-                    case "start":
-                        startBot(sender, false);
+        if (command.getName().equals("discord")) {
+            if (args.length < 1) return false;
+            switch (args[0].toLowerCase()) {
+                case "start":
+                    if (!sender.isOp()) {
+                        sender.sendMessage("§c你沒有權限執行此命令!");
                         return true;
-                    case "stop":
-                        stopBot(sender);
+                    }
+                    startBot(sender, false);
+                    return true;
+                case "stop":
+                    if (!sender.isOp()) {
+                        sender.sendMessage("§c你沒有權限執行此命令!");
                         return true;
-                    case "reload":
-                        init();
-                        reload(sender);
+                    }
+                    stopBot(sender);
+                    return true;
+                case "delmsg":
+                    if (!sender.isOp()) {
+                        sender.sendMessage("§c你沒有權限執行此命令!");
                         return true;
-                    case "verify":
-                        if (sender instanceof Player) verifyMinecraft((Player) sender);
+                    }
+                    if (args.length < 3) {
+                        sender.sendMessage("§6/discord delmsg <channelID> <amount>");
                         return true;
-                    case "unlink":
-                        if (sender instanceof Player) {
-                            Player player = (Player) sender;
-                            unlink(player.getUniqueId().toString(), true);
-                        }
-                        break;
-                    case "delmsg":
-                        if (args.length < 3) throw new InsuffcientArgumentsException(3);
-                        if (!args[2].matches("[0-9]+")) return false;
-                        else deleteAllMessages(args[1], sender.getName(), Integer.valueOf(args[2]));
+                    }
+                    if (!args[2].matches("[0-9]+")) return false;
+                    else deleteAllMessages(args[1], sender.getName(), Integer.valueOf(args[2]));
+                    return true;
+                case "setnick":
+                    if (!sender.isOp()) {
+                        sender.sendMessage("§c你沒有權限執行此命令!");
                         return true;
-                    case "mute":
-                        if (!(sender instanceof Player)) return false;
-                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
-                        else {
-                            DiscordMessageHandler dmh = new DiscordMessageHandler();
-                            switch (args[1]) {
-                                case "on":
-                                    dmh.mute(((Player) sender).getUniqueId().toString());
-                                    break;
-                                case "off":
-                                    dmh.unmute(((Player) sender).getUniqueId().toString());
-                                    break;
-                                default:
-                                    sender.sendMessage("§6/discord mute on|off");
-                                    break;
-                            }
-                        }
+                    }
+                    if (args.length < 2) {
+                        sender.sendMessage("§6/discord setnick <Nickname>");
                         return true;
-                    case "nick":
-                        if (args.length < 2) throw new InsuffcientArgumentsException(2);
-                        if (sender instanceof Player) {
-                            MinecraftMessageHandler mmh = new MinecraftMessageHandler();
-                            mmh.setOPNickname((Player) sender, args[1]);
-                        }
-                    default:
-                        return false;
-                }
-            } else if (command.getName().equals("color")) {
-                StringBuilder tmp = new StringBuilder();
-                for (int i = 0; i < 10; i++)
-                    tmp.append("§").append(i).append(i).append("§r");
-                sender.sendMessage(tmp.toString());
-                return true;
+                    }
+                    if (sender instanceof Player) {
+                        Player player = (Player) sender;
+                        MinecraftMessageHandler mmh = new MinecraftMessageHandler();
+                        StringBuilder tmp = new StringBuilder();
+                        for (int i = 1; i < args.length; i++)
+                            tmp.append(args[i]);
+                        mmh.setOPNickname(player, tmp.toString());
+                        player.sendMessage("§6暱稱已變更為" + tmp.toString());
+                    }
+                    return true;
+                case "verify":
+                    if (sender instanceof Player) verifyMinecraft((Player) sender);
+                    return true;
+                case "unlink":
+                    if (sender instanceof Player) {
+                        Player player = (Player) sender;
+                        unlink(player.getName(), true);
+                        player.sendMessage("已解除綁定");
+                    }
+                    return true;
+                case "mute":
+                    if (!(sender instanceof Player)) return false;
+                    if (args.length < 2) {
+                        sender.sendMessage("§6/discord mute on|off");
+                        return true;
+                    }
+                    DiscordMessageHandler dmh = new DiscordMessageHandler();
+                    switch (args[1]) {
+                        case "on":
+                            dmh.mute(((Player) sender).getUniqueId().toString());
+                            break;
+                        case "off":
+                            dmh.unmute(((Player) sender).getUniqueId().toString());
+                            break;
+                        default:
+                            sender.sendMessage("§6/discord mute on|off");
+                            break;
+                    }
+                    return true;
+                default:
+                    return false;
             }
-        } catch (InsuffcientArgumentsException e) {
-            e.warn(sender);
+        } else if (command.getName().equals("color")) {
+            StringBuilder tmp = new StringBuilder();
+            for (int i = 0; i < 10; i++)
+                tmp.append("§").append(i).append(i);
+            for (char ch : new char[]{'a', 'b', 'c', 'd', 'e'})
+                tmp.append("§").append(ch).append(ch);
+            tmp.append("\n");
+            for (char ch : new char[]{'k', 'l', 'm', 'n', 'o'})
+                tmp.append("§").append(ch).append(ch);
+            sender.sendMessage(tmp.toString());
             return true;
         }
         return false;
     }
 
     public void toDiscordMainTextChannel(String msg) {
+        if (jda == null || jda.getStatus() == JDA.Status.SHUTTING_DOWN || jda.getStatus() == JDA.Status.SHUTDOWN)
+            return;
         mainText.sendMessage(msg).queue();
     }
 
@@ -242,7 +269,7 @@ public final class Main extends JavaPlugin {
         player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
     }
 
-    private void deleteAllMessages(String channelID, String name, int max) {
+    public void deleteAllMessages(String channelID, String name, int max) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
         int count = 0;
@@ -257,6 +284,7 @@ public final class Main extends JavaPlugin {
             }
             if (toDel.size() < 2) break;
             channel.deleteMessages(toDel).queue();
+            if (channel.getIterableHistory() == null) break;
         }
         channel.sendMessage("All messages was DELETE by " + name).queue();
     }
@@ -265,7 +293,6 @@ public final class Main extends JavaPlugin {
         if (linkedUser.getString(author.getId()) != null) return 3; //已被綁定
         if (getServer().getPlayer(minecraftName) == null) return 2; //角色不在線
         if (verify.get(minecraftName) != null) return 1; //已有人在對同角色進行驗證
-        log("提出要求用戶: " + author.getName() + ", 驗證對象: " + minecraftName);
         verify.put(minecraftName, author.getId());
         log("========== 目前清單 ==========");
         for (Map.Entry entry : verify.entrySet())
@@ -279,7 +306,6 @@ public final class Main extends JavaPlugin {
         if (dcid != null) {
             verify.remove(name, dcid);
             linkedUser.set(dcid, name);
-            log("linked dcid: " + dcid + ",uuid: " + player.getUniqueId().toString());
             uuid2dcid.set(player.getUniqueId().toString(), dcid);
             dcid2uuid.set(dcid, player.getUniqueId().toString());
             Role playerRole = jda.getRoleById(config.getString("PlayerRole"));
@@ -287,7 +313,7 @@ public final class Main extends JavaPlugin {
             Member member = guild.getMemberById(dcid);
             if (player.isOp()) gc.addRolesToMember(member, opRole).queue();
             else gc.addRolesToMember(member, playerRole).queue();
-            player.sendMessage("Linked to " + member.getUser().getName());
+            player.sendMessage("Sucessful linked to " + member.getUser().getName());
         } else
             player.sendMessage("You have not link any discord user.");
     }
