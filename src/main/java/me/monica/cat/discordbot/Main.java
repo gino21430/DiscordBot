@@ -29,23 +29,23 @@ public final class Main extends JavaPlugin {
     public JDA jda;
     public FileConfiguration config;
     public Map<String, String> verify;
+    public FileConfiguration linkedUser;
     private Guild guild;
     private GuildController gc;
     private TextChannel mainText;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
-    public FileConfiguration linkedUser;
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
     }
 
-    public JDA getJda() {
-        return this.jda;
-    }
-
     public static void log(String msg) {
         getPlugin().getLogger().info(msg);
+    }
+
+    public JDA getJda() {
+        return this.jda;
     }
 
     @Override
@@ -181,7 +181,7 @@ public final class Main extends JavaPlugin {
                     case "delmsg":
                         if (args.length < 3) throw new InsuffcientArgumentsException(3);
                         if (!args[2].matches("[0-9]+")) return false;
-                        else deleteAllMessages(args[1], sender.getName(),Integer.valueOf(args[2]));
+                        else deleteAllMessages(args[1], sender.getName(), Integer.valueOf(args[2]));
                         return true;
                     case "mute":
                         if (!(sender instanceof Player)) return false;
@@ -242,23 +242,23 @@ public final class Main extends JavaPlugin {
         player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
     }
 
-    private void deleteAllMessages(String channelID, String name,int max) {
+    private void deleteAllMessages(String channelID, String name, int max) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
         int count = 0;
-        while (count<max) {
+        while (count < max) {
             List<Message> toDel = new ArrayList<>();
             for (Message msg : channel.getIterableHistory()) {
                 toDel.add(msg);
                 count++;
-                if (count==max) break;
+                if (count == max) break;
                 if (toDel.size() == 99) break;
                 //Discord.Log("To delete message: "+msg.getContentDisplay());
             }
             if (toDel.size() < 2) break;
             channel.deleteMessages(toDel).queue();
         }
-        channel.sendMessage("All messages was DELETE by "+name).queue();
+        channel.sendMessage("All messages was DELETE by " + name).queue();
     }
 
     public int verifyStart(User author, String minecraftName) {
@@ -279,7 +279,7 @@ public final class Main extends JavaPlugin {
         if (dcid != null) {
             verify.remove(name, dcid);
             linkedUser.set(dcid, name);
-            log("linked dcid: "+dcid+",uuid: "+player.getUniqueId().toString());
+            log("linked dcid: " + dcid + ",uuid: " + player.getUniqueId().toString());
             uuid2dcid.set(player.getUniqueId().toString(), dcid);
             dcid2uuid.set(dcid, player.getUniqueId().toString());
             Role playerRole = jda.getRoleById(config.getString("PlayerRole"));
@@ -301,15 +301,15 @@ public final class Main extends JavaPlugin {
             dcid = input;
             uuid = dcid2uuid.getString(dcid);
         }
-        if (dcid==null) {
+        if (dcid == null) {
             log("dcid is null");
             return;
         }
-        if (uuid==null) {
+        if (uuid == null) {
             log("uuid is null");
             return;
         }
-        log("dcid: "+dcid+", uuid: "+uuid);
+        log("dcid: " + dcid + ", uuid: " + uuid);
         dcid2uuid.set(dcid, null);
         uuid2dcid.set(uuid, null);
         linkedUser.set(dcid, null);

@@ -26,7 +26,8 @@ public class DiscordMessageHandler {
 
     public void handleGuildMessage(User author, String msg) {
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
-        if (dc2mc) Main.getPlugin().toSendMessageToMultilayers(main.linkedUser.getString(author.getId()), ChatColor.stripColor(msg), uuids);
+        if (dc2mc)
+            Main.getPlugin().toSendMessageToMultilayers(main.linkedUser.getString(author.getId()), ChatColor.stripColor(msg), uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
@@ -46,7 +47,7 @@ public class DiscordMessageHandler {
                         Thread thread = new Thread(() -> {
                             Date date = new Date();
                             long startTime = date.getTime();
-                            Main.log("開始計時; "+startTime);
+                            Main.log("開始計時; " + startTime);
                             while (date.getTime() <= startTime + 60000) {
                                 if (!Main.getPlugin().verify.containsValue(author.getId())) {
                                     channel.sendMessage("您已完成驗證!").queue();

@@ -30,7 +30,7 @@ public class MinecraftMessageHandler {
 
     public void save() {
         try {
-            OPNickname.save(new File(Main.getPlugin().getDataFolder(),"OPNickname.yml"));
+            OPNickname.save(new File(Main.getPlugin().getDataFolder(), "OPNickname.yml"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,7 +41,7 @@ public class MinecraftMessageHandler {
         String prefix = handlePrefix(player);
         ItemStack item = player.getInventory().getItemInMainHand();
         if (msg.contains("[i]") && item.getType() != Material.AIR) {
-            Main.log(player.getName()+" tell a Item");
+            Main.log(player.getName() + " tell a Item");
             StringBuilder tellraw = new StringBuilder();
             tellraw.append("tellraw @a [");
 
@@ -86,8 +86,8 @@ public class MinecraftMessageHandler {
             msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
             if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
         } else { //一般對話
-            Main.getPlugin().toBroadcastToMinecraft(prefix+msg);
-            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix+msg));
+            Main.getPlugin().toBroadcastToMinecraft(prefix + msg);
+            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
         }
         return true;
     }
@@ -127,7 +127,7 @@ public class MinecraftMessageHandler {
     private String handlePrefix(Player player) {
         if (player.isOp()) {
             String nickname = OPNickname.getString(player.getUniqueId().toString());
-            if (nickname==null) nickname = "管理人員";
+            if (nickname == null) nickname = "管理人員";
             return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
         }
         try {
@@ -145,6 +145,6 @@ public class MinecraftMessageHandler {
     }
 
     public void setOPNickname(Player player, String nickname) {
-        OPNickname.set(player.getUniqueId().toString(),nickname);
+        OPNickname.set(player.getUniqueId().toString(), nickname);
     }
 }

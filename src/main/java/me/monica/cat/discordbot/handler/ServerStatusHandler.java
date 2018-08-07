@@ -15,11 +15,10 @@ import static org.bukkit.Bukkit.getServer;
 
 public class ServerStatusHandler {
 
+    private static final long startUpTime = System.currentTimeMillis();
+    public static TimerTask task;
     private static double tps;
     private static int updatePeriod;
-    public static TimerTask task;
-    private static final long startUpTime = System.currentTimeMillis();
-
 
     public static void init() {
         updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
@@ -46,7 +45,7 @@ public class ServerStatusHandler {
             }
         };
         Main.log("updatePeriod: " + updatePeriod);
-        timer.schedule(task, 5 * 1000, updatePeriod * 1000);
+        timer.schedule(task, updatePeriod * 1000, updatePeriod * 1000);
     }
 
 
@@ -67,8 +66,21 @@ public class ServerStatusHandler {
 
         //chunks
         int chunks = 0;
-        for (World world : getServer().getWorlds())
-            chunks += world.getLoadedChunks().length;
+        boolean bl = true;
+        while (bl) {
+            try {
+                for (World world : getServer().getWorlds())
+                    chunks += world.getLoadedChunks().length;
+                bl = false;
+            } catch (NullPointerException e) {
+                Main.log("Chunks are NULL");
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
         int players = Bukkit.getOnlinePlayers().size();
 
         //tps
