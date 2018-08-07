@@ -3,4 +3,4 @@ target/
 .project
 .classpath
 dependency-reduced-pom.xml
-DiscordBot.iml
+*.iml
