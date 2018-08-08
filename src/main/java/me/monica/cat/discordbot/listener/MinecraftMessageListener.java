@@ -21,6 +21,6 @@ public class MinecraftMessageListener implements Listener {
         File file = new File(Main.getPlugin().getDataFolder().getParentFile().getPath() + "\\players\\" + e.getPlayer().getName() + ".yml");
         if (YamlConfiguration.loadConfiguration(file).getString("高級會員").equals("無"))
             e.setMessage(ChatColor.stripColor(messsge));
-        if (minecraftMessageHandler.handle(e.getPlayer(), messsge)) e.setCancelled(true);
+        e.setCancelled(minecraftMessageHandler.handle(e.getPlayer(), messsge));
     }
 }

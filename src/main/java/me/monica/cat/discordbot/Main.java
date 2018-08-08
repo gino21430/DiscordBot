@@ -57,6 +57,7 @@ public final class Main extends JavaPlugin {
         init();
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
+        getServer().getPluginManager().registerEvents(new MinecraftBroadcastListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
@@ -177,7 +178,7 @@ public final class Main extends JavaPlugin {
                         return true;
                     }
                     if (args.length < 3) {
-                        sender.sendMessage("§6/discord delmsg <channelID> <amount>");
+                        sender.sendMessage("§e/discord delmsg <channelID> <amount>");
                         return true;
                     }
                     if (!args[2].matches("[0-9]+")) return false;
@@ -189,7 +190,7 @@ public final class Main extends JavaPlugin {
                         return true;
                     }
                     if (args.length < 2) {
-                        sender.sendMessage("§6/discord setnick <Nickname>");
+                        sender.sendMessage("§e/discord setnick <Nickname>");
                         return true;
                     }
                     if (sender instanceof Player) {
@@ -199,7 +200,7 @@ public final class Main extends JavaPlugin {
                         for (int i = 1; i < args.length; i++)
                             tmp.append(args[i]);
                         mmh.setOPNickname(player, tmp.toString());
-                        player.sendMessage("§6暱稱已變更為" + tmp.toString());
+                        player.sendMessage("§e暱稱已變更為: " + tmp.toString());
                     }
                     return true;
                 case "verify":
@@ -215,19 +216,19 @@ public final class Main extends JavaPlugin {
                 case "mute":
                     if (!(sender instanceof Player)) return false;
                     if (args.length < 2) {
-                        sender.sendMessage("§6/discord mute on|off");
+                        sender.sendMessage("§e/discord mute on|off");
                         return true;
                     }
                     DiscordMessageHandler dmh = new DiscordMessageHandler();
                     switch (args[1]) {
                         case "on":
-                            dmh.mute(((Player) sender).getUniqueId().toString());
+                            dmh.mute(((Player) sender));
                             break;
                         case "off":
-                            dmh.unmute(((Player) sender).getUniqueId().toString());
+                            dmh.unmute(((Player) sender));
                             break;
                         default:
-                            sender.sendMessage("§6/discord mute on|off");
+                            sender.sendMessage("§e/discord mute on|off");
                             break;
                     }
                     return true;
@@ -242,7 +243,7 @@ public final class Main extends JavaPlugin {
                 tmp.append("§").append(ch).append(ch);
             tmp.append("\n");
             for (char ch : new char[]{'k', 'l', 'm', 'n', 'o'})
-                tmp.append("§").append(ch).append(ch);
+                tmp.append("§").append(ch).append(ch).append("§r ");
             sender.sendMessage(tmp.toString());
             return true;
         }

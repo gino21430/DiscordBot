@@ -11,6 +11,6 @@ public class MinecraftPlayerQuitListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         DiscordMessageHandler dmh = new DiscordMessageHandler();
-        dmh.mute(e.getPlayer().getUniqueId().toString());
+        dmh.mute(e.getPlayer());
     }
 }

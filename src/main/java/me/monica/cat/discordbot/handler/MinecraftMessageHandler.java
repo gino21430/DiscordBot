@@ -37,11 +37,11 @@ public class MinecraftMessageHandler {
     }
 
     public boolean handle(Player player, String msg) {
-        if (msg.startsWith("@") || msg.startsWith("#")) return false;
+        if (msg.startsWith("@ ") || msg.startsWith("# ")) return false;
         String prefix = handlePrefix(player);
         ItemStack item = player.getInventory().getItemInMainHand();
+
         if (msg.contains("[i]") && item.getType() != Material.AIR) {
-            Main.log(player.getName() + " tell a Item");
             StringBuilder tellraw = new StringBuilder();
             tellraw.append("tellraw @a [");
 
@@ -49,12 +49,17 @@ public class MinecraftMessageHandler {
 
             // 處理物品
             if (msg.equals("[i]")) {
-                tellraw.append(dealItem(item));
+                tellraw.append(dealPureString(prefix)).append(",").append(dealItem(item));
             } else {
-                Main.log("BEFORE msg: \"" + msg + "\"");
                 if (msg.endsWith("[i]")) msg += " ";
                 if (msg.startsWith("[i]")) msg = " " + msg;
-                Main.log("AFTER msg: \"" + msg + "\"");
+
+                msg = msg.replaceAll("[&|$]", "§");
+                if (!isVIP(player.getName()) && !player.isOp()) {
+                    Main.log("Player:" + player.getName() + ",msg:" + msg);
+                    msg = ChatColor.stripColor(msg);
+                }
+
                 pure = msg.split("\\[i]");
                 tellraw.append(dealPureString(prefix)).append(",");
                 for (int i = 0, len = pure.length; i < len; i++) {
@@ -78,6 +83,7 @@ public class MinecraftMessageHandler {
             }
             tellraw.append("]");
 
+            Main.log("tellraw: " + tellraw.toString());
             getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
 
             String displayName;
@@ -86,7 +92,14 @@ public class MinecraftMessageHandler {
             else displayName = item.getItemMeta().getDisplayName();
             msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
             if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
+        } else if (msg.contains("[i]") && item.getType() == Material.AIR) {
+            player.sendMessage("§c您手上未持有物品");
         } else { //一般對話
+            msg = msg.replaceAll("[&|$]", "§");
+            if (!isVIP(player.getName()) && !player.isOp()) {
+                Main.log("Player:" + player.getName() + ",msg:" + msg);
+                msg = ChatColor.stripColor(msg);
+            }
             Main.getPlugin().toBroadcastToMinecraft(prefix + msg);
             if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
         }
@@ -103,10 +116,9 @@ public class MinecraftMessageHandler {
         int amount = item.getAmount();
         StringBuilder finalLore = new StringBuilder();
         if (!item.hasItemMeta()) {
-            Main.log("There is no ItemMeta");
             displayName = type;
             amount = 1;
-            finalLore.append("\\\"").append("NO LORE").append("\\\"");
+            finalLore.append("\\\"").append(" ").append("\\\"");
         } else {
             ItemMeta meta = item.getItemMeta();
             type = item.getType().toString();
@@ -119,6 +131,8 @@ public class MinecraftMessageHandler {
                     finalLore.append("\\\"").append(iter.next()).append("\\\"");
                     if (iter.hasNext()) finalLore.append(",");
                 }
+            } else {
+                finalLore.append("\\\"").append(" ").append("\\\"");
             }
         }
         String itemSection = "{\"text\":\"\",\"extra\":[{\"text\":\"[%s x %d]\",\"hoverEvent\":{\"action\":\"show_item\",\"value\":\"{id:\\\"minecraft:%s\\\",Damage:0,Count:%d,tag:{display:{Name:\\\"%s\\\",Lore:[%s]}}}\"}}]}";
@@ -128,9 +142,12 @@ public class MinecraftMessageHandler {
     private String handlePrefix(Player player) {
         if (player.isOp()) {
             String nickname = OPNickname.getString(player.getUniqueId().toString());
-            if (nickname == null) nickname = "管理員";
-            else if (player.getName().equals("catMonica"))
-                return "§8[§c神之子§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
+            if (nickname == null) nickname = "管管";
+            else if (player.getName().equals("catMonica")) {
+                nickname = ChatColor.translateAlternateColorCodes('&', nickname);
+                nickname = ChatColor.translateAlternateColorCodes('$', nickname);
+                return "§8[§c神之子§8]§r " + nickname + "§r §7-§r §c" + player.getName() + "§r > ";
+            }
             return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
         }
         try {
@@ -139,12 +156,18 @@ public class MinecraftMessageHandler {
             String career = config.getString("玩家職業");
             String level = config.getString("玩家等級");
             if (!config.getString("高級會員").equals("無"))
-                return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §b" + player.getName() + "§r > ";
-            return "§8[§e" + career + "§8] §eLv." + level + "§r §7-§r §e" + player.getName() + "§r > ";
+                return "§8[§c" + career + "§8] §eLv." + level + "§r §7-§r §b" + player.getName() + "§r > ";
+            return "§8[§c" + career + "§8] §eLv." + level + "§r §7-§r §e" + ChatColor.stripColor(player.getName()) + "§r > ";
         } catch (IOException e) {
             e.printStackTrace();
             return "§l§c[Prefix錯誤]§r §e" + player.getName() + "§r > ";
         }
+    }
+
+    private boolean isVIP(String name) {
+        File file = new File(Main.getPlugin().getDataFolder().getParentFile().getPath() + "\\players\\" + name + ".yml");
+        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+        return !config.getString("高級會員").equals("無");
     }
 
     public void setOPNickname(Player player, String nickname) {

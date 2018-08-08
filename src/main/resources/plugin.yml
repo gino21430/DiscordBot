@@ -6,10 +6,10 @@ commands:
   discord:
     description: "§bDiscord bot command by catMonica."
     aliases: [dc]
-    usage: "usage: /<command> start|stop|reload|verify|mute|setnick"
+    usage: "§c用法: /<command> start|stop|reload|verify|mute|setnick"
     permission-message: "You do not have /<permission>"
   color:
     description: "A color format example"
-    usage: "usage: /<command>"
+    usage: "§c用法: /<command>"
     permission-message: "You do not have /<permission>"
 

@@ -14,7 +14,7 @@ public class MinecraftPlayerJoinListener implements Listener {
         Player player = e.getPlayer();
         Main.getPlugin().detectNameChanged(player);
         DiscordMessageHandler dmh = new DiscordMessageHandler();
-        dmh.unmute(player.getUniqueId().toString());
-        //minecraftMessageHandler.unmute(player.getUniqueId().toString());
+        dmh.unmute(player);
+        player.sendMessage("可透過\"/dc mute\"決定是否屏蔽來自Discord的訊息");
     }
 }

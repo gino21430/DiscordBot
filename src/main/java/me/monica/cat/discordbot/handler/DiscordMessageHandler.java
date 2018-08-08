@@ -126,13 +126,16 @@ public class DiscordMessageHandler {
         }
     }
 
-    public void mute(String uuid) {
-        uuids.remove(uuid);
+    public void mute(Player player) {
+        uuids.remove(player.getUniqueId().toString());
+        player.sendMessage("[§bDiscord] 靜音來自Discord頻道的訊息: §a開啟");
         Main.log("uuids size: " + uuids.size());
     }
 
-    public void unmute(String uuid) {
+    public void unmute(Player player) {
+        String uuid = player.getUniqueId().toString();
         if (!uuids.contains(uuid)) uuids.add(uuid);
+        player.sendMessage("[§bDiscord] 靜音來自Discord頻道的訊息: §e關閉");
         Main.log("uuids size: " + uuids.size());
     }
 

@@ -71,7 +71,7 @@ public class ServerStatusHandler {
                     chunks += world.getLoadedChunks().length;
                 bl = false;
             } catch (NullPointerException e) {
-                Main.log("Chunks are NULL");
+                Main.log("Chunks are NULL wait 5 seconds.....");
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e1) {
@@ -99,15 +99,15 @@ public class ServerStatusHandler {
         minute = minute % 60;
 
 
-        return "==========" + date.toString() + "==========" + "\n" +
+        return "========" + date.toString() + "========" + "\n" +
                 "Running time : " + hour + "小時" + minute + "分" + second + "秒" + "\n" +
-                "Thread (spigot/jvm/max) : " + t.getThreadCount() + "/" + t.getDaemonThreadCount() + "/" + t.getPeakThreadCount() + "\n" +
+                "Thread (spigot/jvm/max) : " + t.getThreadCount() + " / " + t.getDaemonThreadCount() + " / " + t.getPeakThreadCount() + "\n" +
                 "Memory (total/available/max)：" + tM + "/" + aM + "/" + mM + " MB" + "\n" +
                 "CPU : " + cpu + " %" + "\n" +
                 "Players : " + players + "\n" +
                 "Chunks : " + chunks + "\n" +
                 "TPS : " + tps + "\n" +
-                "==========================================";
+                "======================================";
     }
 
 }
