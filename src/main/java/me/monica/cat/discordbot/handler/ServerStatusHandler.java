@@ -54,9 +54,9 @@ public class ServerStatusHandler {
         Date date = new Date();
 
         //Memory
-        int aM = (int) lRuntime.freeMemory() / 1024 / 1024;
-        int mM = (int) lRuntime.maxMemory() / 1024 / 1024;
-        int tM = (int) lRuntime.totalMemory() / 1024 / 1024;
+        long aM = lRuntime.freeMemory() / 1024 / 1024;
+        long mM = lRuntime.maxMemory() / 1024 / 1024;
+        long tM = lRuntime.totalMemory() / 1024 / 1024;
 
         //cpu
         DecimalFormat df = new DecimalFormat("#.##");
