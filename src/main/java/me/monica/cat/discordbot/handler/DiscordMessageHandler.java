@@ -139,14 +139,14 @@ public class DiscordMessageHandler {
 
     public void mute(Player player) {
         uuids.remove(player.getUniqueId().toString());
-        player.sendMessage("[§bDiscord] 靜音來自Discord頻道的訊息: §a開啟");
+        player.sendMessage("[§bDiscord§r] §e靜音來自Discord頻道的訊息§r: §c開啟");
         Main.log("uuids size: " + uuids.size());
     }
 
     public void unmute(Player player) {
         String uuid = player.getUniqueId().toString();
         if (!uuids.contains(uuid)) uuids.add(uuid);
-        player.sendMessage("[§bDiscord] 靜音來自Discord頻道的訊息: §e關閉");
+        player.sendMessage("[§bDiscord§r] §e靜音來自Discord頻道的訊息§r: §a關閉");
         Main.log("uuids size: " + uuids.size());
     }
 

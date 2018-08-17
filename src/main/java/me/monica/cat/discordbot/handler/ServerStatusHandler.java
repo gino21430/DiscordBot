@@ -20,13 +20,13 @@ public class ServerStatusHandler {
     private static final long startUpTime = System.currentTimeMillis();
     private static double tps = 0;
     private static int updatePeriod;
-    private static Set<String> opList = new HashSet<>();
+    //private static Set<String> opList = new HashSet<>();
     private static Set<String> playerList = new HashSet<>();
 
 
     public static void init() {
         updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
-        if (updatePeriod < 5) updatePeriod = 5;
+        if (updatePeriod < 30) updatePeriod = 30;
     }
 
     public void runTimerTask() {
@@ -74,22 +74,18 @@ public class ServerStatusHandler {
                     chunks += world.getLoadedChunks().length;
                 bl = false;
             } catch (NullPointerException e) {
-                Main.log("Chunks are NULL wait 5 seconds.....");
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ignored) {
-                }
+                Main.log("Chunks are NULL .....");
             }
         }
         int players = Bukkit.getOnlinePlayers().size();
         Bukkit.getOnlinePlayers().forEach((player) -> {
-            if (player.isOp()) opList.add(player.getName());
-            else playerList.add(player.getName());
+            if (!player.isOp()) playerList.add(player.getName());
         });
-        StringBuilder opListStr = new StringBuilder();
+        //StringBuilder opListStr = new StringBuilder();
         StringBuilder playerListStr = new StringBuilder();
-        Iterator iter1 = opList.iterator();
+        //Iterator iter1 = opList.iterator();
         Iterator iter2 = playerList.iterator();
+        /*
         while (true) {
             if (iter1.hasNext()) opListStr.append(String.format("%-16s", iter1.next()));
             else {
@@ -104,14 +100,15 @@ public class ServerStatusHandler {
                 break;
             }
         }
+        */
         while (true) {
-            if (iter2.hasNext()) playerListStr.append(String.format("%-16s", iter1.next()));
+            if (iter2.hasNext()) playerListStr.append(String.format("%-16s", iter2.next()));
             else {
                 playerListStr.append("\n");
                 break;
             }
             if (iter2.hasNext()) {
-                playerListStr.append(String.format("\t%-16s", iter1.next()));
+                playerListStr.append(String.format("\t%-16s", iter2.next()));
                 playerListStr.append("\n");
             } else {
                 playerListStr.append("\n");
@@ -149,8 +146,6 @@ public class ServerStatusHandler {
                 "Chunks : " + chunks + "\n" +
                 "TPS : " + tps + "\n" +
                 "Players : " + players + "\n" +
-                "======== OP : " + opList.size() + " ========\n" +
-                opListStr.toString() +
                 "======== Player : " + playerList.size() + " ========\n" +
                 playerListStr.toString();
     }

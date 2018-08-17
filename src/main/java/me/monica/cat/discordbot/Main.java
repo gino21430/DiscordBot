@@ -16,7 +16,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.security.auth.login.LoginException;
@@ -24,7 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public final class Main extends JavaPlugin {
+public final class Main extends JavaPlugin implements Listener {
 
     public JDA jda;
     public FileConfiguration config;
@@ -155,6 +161,17 @@ public final class Main extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equalsIgnoreCase("discord") && args.length == 0) {
+            String[] opsTab = {"start", "stop", "delmsg", "setnick", "verify", "unlink", "mute"};
+            String[] playersTab = {"verify", "unlink", "mute"};
+            if (sender.isOp()) return Arrays.asList(opsTab);
+            else return Arrays.asList(playersTab);
+        }
+        return null;
     }
 
     @Override
@@ -371,5 +388,20 @@ public final class Main extends JavaPlugin {
         if (linkedUser.getString(dcid).equals(name)) return;
         linkedUser.set(dcid, name);
         player.sendMessage("Detecting your name changed!");
+    }
+
+    @EventHandler
+    public void protectCatMonica(EntityDamageByEntityEvent e) {
+        Entity entity = e.getEntity();
+        if (!(e.getEntityType() == EntityType.PLAYER)) return;
+        if (entity.getName().equals("catMonica")) {
+            e.setCancelled(true);
+            ((Player) entity).setNoDamageTicks(60 * 20);
+            Entity damager = e.getDamager();
+            if (damager instanceof LivingEntity) {
+                LivingEntity live = (LivingEntity) damager;
+                live.damage(live.getHealth() * 20 + 10000, entity);
+            }
+        }
     }
 }
