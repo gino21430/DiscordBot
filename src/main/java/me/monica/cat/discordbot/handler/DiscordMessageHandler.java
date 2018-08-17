@@ -36,7 +36,6 @@ public class DiscordMessageHandler {
             messageBuilder.append(author).append(" 您未綁定Minecraft帳號呦");
             Main.getPlugin().toDiscordMainTextChannel(messageBuilder.build());
         }
-
         if (dc2mc)
             Main.getPlugin().toSendMessageToMultilayers(authorName, ChatColor.stripColor(message.getContentStripped()), uuids);
     }
@@ -98,12 +97,12 @@ public class DiscordMessageHandler {
                 return;
             case "!pm":
                 if (args.length < 2) {
-                    channel.sendMessage("pm < online player name> <message>").queue();
+                    channel.sendMessage("pm <在線玩家名稱> <訊息>").queue();
                     return;
                 }
                 StringBuilder tmpStr = new StringBuilder();
                 for (int i = 2; i < args.length; i++)
-                    tmpStr.append(args[i]);
+                    tmpStr.append(args[i]).append(" ");
                 Player player = Main.getPlugin().getServer().getPlayer(args[1]);
                 if (player != null) {
                     Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);

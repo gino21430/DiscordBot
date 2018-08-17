@@ -254,12 +254,14 @@ public final class Main extends JavaPlugin {
             }
             case "dcpm": {
                 if (!(sender instanceof Player)) return true;
+                Player player = (Player) sender;
                 if (args.length < 2) return false;
                 StringBuilder tmp = new StringBuilder();
+                tmp.append("[Minecraft私訊] ").append(player.getName()).append(" > ");
                 for (int i = 1; i < args.length; i++) tmp.append(args[i]).append(" ");
                 User user = jda.getUsersByName(args[0], false).get(0);
                 user.openPrivateChannel().queue((channel) -> channel.sendMessage(tmp.toString()).queue());
-                break;
+                return true;
             }
         }
         return false;
@@ -284,7 +286,7 @@ public final class Main extends JavaPlugin {
     }
 
     public void toSendMessageToPlayer(String msg, String author, Player player) {
-        player.sendMessage("[Discord] " + author + " 私訊你: " + msg);
+        player.sendMessage("[§bDiscord§r] §e" + author + " §b私訊你:§r " + msg);
     }
 
     public void deleteAllMessages(String channelID, String name, int max) {

@@ -18,7 +18,6 @@ import static org.bukkit.Bukkit.getServer;
 public class ServerStatusHandler {
 
     private static final long startUpTime = System.currentTimeMillis();
-    public static TimerTask task;
     private static double tps = 0;
     private static int updatePeriod;
     private static Set<String> opList = new HashSet<>();
@@ -33,7 +32,7 @@ public class ServerStatusHandler {
     public void runTimerTask() {
         Timer timer = new Timer();
         TextChannel channel = Main.getPlugin().getJda().getTextChannelById(Main.getPlugin().config.getString("StatusChannel"));
-        task = new TimerTask() {
+        TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 List<Message> toDel = new ArrayList<>();
@@ -58,9 +57,9 @@ public class ServerStatusHandler {
         Date date = new Date();
 
         //Memory
-        long aM = lRuntime.freeMemory() << 20;
-        long mM = lRuntime.maxMemory() << 20;
-        long tM = lRuntime.totalMemory() << 20;
+        long aM = lRuntime.freeMemory() / 1024 / 1024;
+        long mM = lRuntime.maxMemory() / 1024 / 1024;
+        long tM = lRuntime.totalMemory() / 1024 / 1024;
 
         //cpu
         DecimalFormat df = new DecimalFormat("#.##");
@@ -149,11 +148,10 @@ public class ServerStatusHandler {
                 "CPU : " + cpu + " %" + "\n" +
                 "Chunks : " + chunks + "\n" +
                 "TPS : " + tps + "\n" +
-                "======================================\n" +
                 "Players : " + players + "\n" +
-                "======== OP ========\n" +
+                "======== OP : " + opList.size() + " ========\n" +
                 opListStr.toString() +
-                "======== Player ========\n" +
+                "======== Player : " + playerList.size() + " ========\n" +
                 playerListStr.toString();
     }
 

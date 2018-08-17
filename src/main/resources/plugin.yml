@@ -10,7 +10,7 @@ commands:
     permission-message: "You do not have /<permission>"
   dcpm:
     description: "§bDiscord private message."
-    usage: "§c用法: /<command> <Discord名稱>"
+    usage: "§c用法: /<command> <Discord名稱> <訊息>"
     permission-message: "You do not have /<permission>"
   color:
     description: "A color format example"
