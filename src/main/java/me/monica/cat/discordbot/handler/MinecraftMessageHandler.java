@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.bukkit.Bukkit.getServer;
-
 public class MinecraftMessageHandler {
 
     private static boolean mc2dc;
@@ -36,31 +34,31 @@ public class MinecraftMessageHandler {
         }
     }
 
-    public boolean handle(Player player, String msg) {
-        if (msg.startsWith("@ ") || msg.startsWith("# ")) return false;
+    public void handle(Player player, String msg) {
+        if (msg.startsWith("@") || msg.startsWith("#") || msg.startsWith("$")) return;
         String prefix = handlePrefix(player);
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (msg.contains("[i]") && item.getType() != Material.AIR) {
+        if (msg.toLowerCase().contains("[i]") && item.getType() != Material.AIR) {
             StringBuilder tellraw = new StringBuilder();
             tellraw.append("tellraw @a [");
 
             String[] pure;
 
             // 處理物品
-            if (msg.equals("[i]")) {
+            if (msg.toLowerCase().equals("[i]")) {
                 tellraw.append(dealPureString(prefix)).append(",").append(dealItem(item));
             } else {
-                if (msg.endsWith("[i]")) msg += " ";
-                if (msg.startsWith("[i]")) msg = " " + msg;
+                if (msg.toLowerCase().endsWith("[i]")) msg += " ";
+                if (msg.toLowerCase().startsWith("[i]")) msg = " " + msg;
 
-                msg = msg.replaceAll("[&|$]", "§");
-                if (!isVIP(player.getName()) && !player.isOp()) {
+                msg = translateAlternateColorCodes(msg);
+                if (isVip(player.getName()) && !player.isOp()) {
                     Main.log("Player:" + player.getName() + ",msg:" + msg);
                     msg = ChatColor.stripColor(msg);
                 }
 
-                pure = msg.split("\\[i]");
+                pure = msg.split("\\[[iI]]");
                 tellraw.append(dealPureString(prefix)).append(",");
                 for (int i = 0, len = pure.length; i < len; i++) {
                     Main.log("pure[" + i + "]: \"" + pure[i] + "\"");
@@ -84,26 +82,22 @@ public class MinecraftMessageHandler {
             tellraw.append("]");
 
             Main.log("tellraw: " + tellraw.toString());
-            getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
+            //getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
 
             String displayName;
             if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
                 displayName = item.getType().toString();
             else displayName = item.getItemMeta().getDisplayName();
-            msg = msg.replaceAll("\\[i]", "[" + displayName + "]");
-            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(msg));
-        } else if (msg.contains("[i]") && item.getType() == Material.AIR) {
-            player.sendMessage("§c您手上未持有物品");
+            msg = msg.replaceAll("\\[[i|I]]", "[" + displayName + "]");
+            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
         } else { //一般對話
-            msg = msg.replaceAll("[&|$]", "§");
-            if (!isVIP(player.getName()) && !player.isOp()) {
-                Main.log("Player:" + player.getName() + ",msg:" + msg);
+            msg = translateAlternateColorCodes(msg);
+            if (isVip(player.getName()) && !player.isOp()) {
                 msg = ChatColor.stripColor(msg);
             }
-            Main.getPlugin().toBroadcastToMinecraft(prefix + msg);
+            //Main.getPlugin().toBroadcastToMinecraft(prefix + msg);
             if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
         }
-        return true;
     }
 
     private String dealPureString(String msg) {
@@ -132,7 +126,7 @@ public class MinecraftMessageHandler {
                     if (iter.hasNext()) finalLore.append(",");
                 }
             } else {
-                finalLore.append("\\\"").append(" ").append("\\\"");
+                finalLore.append("\\\"").append("\\\"");
             }
         }
         String itemSection = "{\"text\":\"\",\"extra\":[{\"text\":\"[%s x %d]\",\"hoverEvent\":{\"action\":\"show_item\",\"value\":\"{id:\\\"minecraft:%s\\\",Damage:0,Count:%d,tag:{display:{Name:\\\"%s\\\",Lore:[%s]}}}\"}}]}";
@@ -143,12 +137,7 @@ public class MinecraftMessageHandler {
         if (player.isOp()) {
             String nickname = OPNickname.getString(player.getUniqueId().toString());
             if (nickname == null) nickname = "管管";
-            else if (player.getName().equals("catMonica")) {
-                nickname = ChatColor.translateAlternateColorCodes('&', nickname);
-                nickname = ChatColor.translateAlternateColorCodes('$', nickname);
-                return "§8[§c神之子§8]§r " + nickname + "§r §7-§r §c" + player.getName() + "§r > ";
-            }
-            return "§8[§c管理§8]§r " + ChatColor.translateAlternateColorCodes('&', nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
+            return "§8[§c管理§8]§r " + translateAlternateColorCodes(nickname) + "§r §7-§r §c" + player.getName() + "§r > ";
         }
         try {
             File file = new File(Main.getPlugin().getDataFolder().getParentFile().getCanonicalPath() + "\\players\\" + player.getName() + ".yml");
@@ -164,13 +153,26 @@ public class MinecraftMessageHandler {
         }
     }
 
-    private boolean isVIP(String name) {
+    private String translateAlternateColorCodes(String message) {
+        char[] b = message.toCharArray();
+        for (int i = 0; i < b.length - 1; i++) {
+            if ((b[i] == '&' || b[i] == '$') && "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf(b[i + 1]) > -1) {
+                b[i] = '§';
+                b[i + 1] = Character.toLowerCase(b[i + 1]);
+            }
+        }
+        return new String(b);
+    }
+
+    private boolean isVip(String name) {
         File file = new File(Main.getPlugin().getDataFolder().getParentFile().getPath() + "\\players\\" + name + ".yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-        return !config.getString("高級會員").equals("無");
+        return config.getString("高級會員").equals("無");
     }
 
     public void setOPNickname(Player player, String nickname) {
         OPNickname.set(player.getUniqueId().toString(), nickname);
     }
+
+
 }

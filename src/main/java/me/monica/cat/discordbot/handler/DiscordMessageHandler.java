@@ -1,6 +1,7 @@
 package me.monica.cat.discordbot.handler;
 
 import me.monica.cat.discordbot.Main;
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
@@ -25,14 +26,23 @@ public class DiscordMessageHandler {
         uuids = new ArrayList<>();
     }
 
-    public void handleGuildMessage(User author, String msg) {
+    public void handleGuildMessage(Message message) {
+        User author = message.getAuthor();
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
+        if (message.getChannel() != main.getMainText()) return;
+        String authorName = main.linkedUser.getString(author.getId());
+        if (authorName == null) {
+            MessageBuilder messageBuilder = new MessageBuilder();
+            messageBuilder.append(author).append(" 您未綁定Minecraft帳號呦");
+            Main.getPlugin().toDiscordMainTextChannel(messageBuilder.build());
+        }
+
         if (dc2mc)
-            Main.getPlugin().toSendMessageToMultilayers(main.linkedUser.getString(author.getId()), ChatColor.stripColor(msg), uuids);
+            Main.getPlugin().toSendMessageToMultilayers(authorName, ChatColor.stripColor(message.getContentStripped()), uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
-        String msg = message.getContentStripped();
+        String msg = message.getContentRaw();
         Member member = Main.getPlugin().getGuild().getMember(author);
         if (!msg.startsWith("!")) return;
         Main.log("PM's message: " + msg);
@@ -43,6 +53,7 @@ public class DiscordMessageHandler {
                 channel.sendMessage("管理員命令 : dc2mc , delmsg , pm").queue();
             return;
         }
+        args[0] = args[0].replaceAll("[-\\\\/_$^&*]", "");
         switch (args[0]) {
             case "!link":
                 if (args.length < 2 || args.length > 2) {
@@ -85,6 +96,19 @@ public class DiscordMessageHandler {
                 Main.getPlugin().unlink(author.getId(), false);
                 channel.sendMessage("已解除綁定").queue();
                 return;
+            case "!pm":
+                if (args.length < 2) {
+                    channel.sendMessage("pm < online player name> <message>").queue();
+                    return;
+                }
+                StringBuilder tmpStr = new StringBuilder();
+                for (int i = 2; i < args.length; i++)
+                    tmpStr.append(args[i]);
+                Player player = Main.getPlugin().getServer().getPlayer(args[1]);
+                if (player != null) {
+                    Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);
+                }
+                return;
         }
 
         //下方switch為管理員命令
@@ -108,18 +132,6 @@ public class DiscordMessageHandler {
                 }
                 if (!args[2].matches("[0-9]+")) return;
                 Main.getPlugin().deleteAllMessages(args[1], author.getName(), Integer.valueOf(args[2]));
-                return;
-            case "!pm":
-                if (args.length < 2) {
-                    channel.sendMessage("pm < online player name> <message>").queue();
-                    return;
-                }
-                StringBuilder tmpStr = new StringBuilder();
-                for (int i = 2; i < args.length; i++)
-                    tmpStr.append(args[i]);
-                Player player = Main.getPlugin().getServer().getPlayer(args[1]);
-                if (player != null)
-                    Main.getPlugin().toSendMessageToPlayer(tmpStr.toString(), author.getName(), player);
                 return;
             default:
                 channel.sendMessage("可用命令 : link , unlink\n管理員命令 : dc2mc , delmsg , pm").queue();

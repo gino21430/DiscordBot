@@ -10,9 +10,7 @@ public class MinecraftWorldSaveListener implements Listener {
 
     @EventHandler
     public void onWorldSave(WorldSaveEvent e) {
-        if (Main.getPlugin().config.getBoolean("Save")) {
-            Main.getPlugin().saveConfig();
-            Main.getPlugin().toBroadcastToMinecraft("[§bDiscordBot§r] §6正在儲存設定檔...");
-        }
+        if (!e.getWorld().getName().equalsIgnoreCase("RPG")) return;
+        if (Main.getPlugin().config.getBoolean("Save")) Main.getPlugin().saveConfig();
     }
 }

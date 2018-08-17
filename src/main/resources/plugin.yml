@@ -8,6 +8,10 @@ commands:
     aliases: [dc]
     usage: "§c用法: /<command> start|stop|reload|verify|mute|setnick"
     permission-message: "You do not have /<permission>"
+  dcpm:
+    description: "§bDiscord private message."
+    usage: "§c用法: /<command> <Discord名稱>"
+    permission-message: "You do not have /<permission>"
   color:
     description: "A color format example"
     usage: "§c用法: /<command>"
