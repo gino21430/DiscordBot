@@ -2,7 +2,6 @@ package me.monica.cat.discordbot.handler;
 
 import com.sun.management.OperatingSystemMXBean;
 import me.monica.cat.discordbot.Main;
-import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -10,19 +9,20 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 import java.lang.management.ManagementFactory;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getServer;
 
-public class ServerStatusHandler {
+public class ServerStatusHandler extends Thread {
 
     private static final long startUpTime = System.currentTimeMillis();
     private static double tps = 0;
     private static int updatePeriod;
-    //private static Set<String> opList = new HashSet<>();
-    private static Set<String> playerList = new HashSet<>();
-
+    private int playerAmount;
+    private int opAmount;
 
     public static void init() {
         updatePeriod = Main.getPlugin().config.getInt("UpdatePeriod");
@@ -35,13 +35,6 @@ public class ServerStatusHandler {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                List<Message> toDel = new ArrayList<>();
-                for (Message msg : channel.getIterableHistory()) {
-                    toDel.add(msg);
-                    if (toDel.size() == 99) break;
-                }
-                if (toDel.size() == 1) channel.deleteMessageById(toDel.get(0).getId()).queue();
-                else if (toDel.size() > 1) channel.deleteMessages(toDel).queue();
                 channel.sendMessage(getData()).queue();
             }
         };
@@ -59,7 +52,6 @@ public class ServerStatusHandler {
         //Memory
         long aM = lRuntime.freeMemory() / 1024 / 1024;
         long mM = lRuntime.maxMemory() / 1024 / 1024;
-        long tM = lRuntime.totalMemory() / 1024 / 1024;
 
         //cpu
         DecimalFormat df = new DecimalFormat("#.##");
@@ -73,48 +65,17 @@ public class ServerStatusHandler {
                 for (World world : getServer().getWorlds())
                     chunks += world.getLoadedChunks().length;
                 bl = false;
-            } catch (NullPointerException e) {
-                Main.log("Chunks are NULL .....");
+            } catch (NullPointerException ignored) {
             }
         }
         int players = Bukkit.getOnlinePlayers().size();
+        opAmount = 0;
+        playerAmount = 0;
         Bukkit.getOnlinePlayers().forEach((player) -> {
-            if (!player.isOp()) playerList.add(player.getName());
+            if (player.isOp()) opAmount++;
+            else playerAmount++;
         });
-        //StringBuilder opListStr = new StringBuilder();
-        StringBuilder playerListStr = new StringBuilder();
-        //Iterator iter1 = opList.iterator();
-        Iterator iter2 = playerList.iterator();
-        /*
-        while (true) {
-            if (iter1.hasNext()) opListStr.append(String.format("%-16s", iter1.next()));
-            else {
-                opListStr.append("\n");
-                break;
-            }
-            if (iter1.hasNext()) {
-                opListStr.append(String.format("\t%-16s", iter1.next()));
-                opListStr.append("\n");
-            } else {
-                opListStr.append("\n");
-                break;
-            }
-        }
-        */
-        while (true) {
-            if (iter2.hasNext()) playerListStr.append(String.format("%-16s", iter2.next()));
-            else {
-                playerListStr.append("\n");
-                break;
-            }
-            if (iter2.hasNext()) {
-                playerListStr.append(String.format("\t%-16s", iter2.next()));
-                playerListStr.append("\n");
-            } else {
-                playerListStr.append("\n");
-                break;
-            }
-        }
+
 
         //tps
         long startTime = System.currentTimeMillis();
@@ -141,13 +102,13 @@ public class ServerStatusHandler {
         return "========" + date.toString() + "========" + "\n" +
                 "Running time : " + hour + "小時" + minute + "分" + second + "秒" + "\n" +
                 "Thread (spigot/jvm/max) : " + t.getThreadCount() + " / " + t.getDaemonThreadCount() + " / " + t.getPeakThreadCount() + "\n" +
-                "Memory (total/available/max)：" + tM + "/" + aM + "/" + mM + " MB" + "\n" +
+                "Memory (available/max)：" + aM + "/" + mM + " MB" + "\n" +
                 "CPU : " + cpu + " %" + "\n" +
                 "Chunks : " + chunks + "\n" +
                 "TPS : " + tps + "\n" +
-                "Players : " + players + "\n" +
-                "======== Player : " + playerList.size() + " ========\n" +
-                playerListStr.toString();
+                "Online Players : " + players + "\n" +
+                " - Players: " + playerAmount + "\n" +
+                " - OPs: " + opAmount + "\n";
     }
 
 }

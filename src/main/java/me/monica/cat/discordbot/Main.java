@@ -26,8 +26,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.security.auth.login.LoginException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public final class Main extends JavaPlugin implements Listener {
@@ -39,8 +39,15 @@ public final class Main extends JavaPlugin implements Listener {
     private Guild guild;
     private GuildController gc;
     private TextChannel mainText;
+    private TextChannel consoleText;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
+    private final OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(new File(getDataFolder(), "DiscordLog.txt")), StandardCharsets.UTF_8);
+
+    public Main() throws FileNotFoundException {
+        Main.warn("File not found");
+    }
+
 
     public static Main getPlugin() {
         return getPlugin(Main.class);
@@ -48,6 +55,10 @@ public final class Main extends JavaPlugin implements Listener {
 
     public static void log(String msg) {
         getPlugin().getLogger().info(msg);
+    }
+
+    public static void warn(String msg) {
+        getPlugin().getLogger().warning("[Error]" + msg);
     }
 
     public JDA getJda() {
@@ -67,7 +78,6 @@ public final class Main extends JavaPlugin implements Listener {
         init();
         getServer().getPluginManager().registerEvents(new MinecraftMessageListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftWorldSaveListener(), this);
-        getServer().getPluginManager().registerEvents(new MinecraftBroadcastListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftPlayerQuitListener(), this);
         getServer().getPluginManager().registerEvents(new MinecraftBanPlayerListener(), this);
@@ -77,6 +87,13 @@ public final class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        synchronized (writer) {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         Thread thread = new Thread(() -> {
             if (jda != null && jda.getStatus() == JDA.Status.CONNECTED) {
                 mainText.sendMessage("**Server Stopping**").queue();
@@ -101,10 +118,11 @@ public final class Main extends JavaPlugin implements Listener {
             try {
                 jda = new JDABuilder(AccountType.BOT)
                         .setToken(token)
-                        .addEventListener(new DiscordGuildMessageListener())
+                        .addEventListener(new DiscordGuildMessageListener(writer))
                         .addEventListener(new DiscordPrivateMessageListener())
                         .buildBlocking(JDA.Status.CONNECTED);
                 mainText = jda.getTextChannelById(config.getString("Channel"));
+                consoleText = jda.getTextChannelById(config.getString("ConsoleChannel"));
                 guild = mainText.getGuild();
                 gc = new GuildController(guild);
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
@@ -149,6 +167,20 @@ public final class Main extends JavaPlugin implements Listener {
         DiscordMessageHandler.init();
         MinecraftMessageHandler.init();
         ServerStatusHandler.init();
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Thread.currentThread().setName("DiscordLogFlushTask");
+                synchronized (writer) {
+                    try {
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }, 1000, 60 * 1000);
     }
 
     public void saveConfig() {
@@ -171,6 +203,7 @@ public final class Main extends JavaPlugin implements Listener {
             if (sender.isOp()) return Arrays.asList(opsTab);
             else return Arrays.asList(playersTab);
         }
+        sender.sendMessage("[Debug] args length is not 0");
         return null;
     }
 
@@ -296,14 +329,19 @@ public final class Main extends JavaPlugin implements Listener {
         mainText.sendMessage(msg).queue();
     }
 
-    public void toSendMessageToMultilayers(String authorName, String msg, List<String> uuids) {
+    public void toSendMessageToMultiPlayers(String authorName, String msg, List<String> uuids) {
         for (String uuid : uuids) {
-            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("§8[§r§bDiscord§r§8]§r §e" + authorName + "§r > " + msg);
+            getServer().getPlayer(UUID.fromString(uuid)).sendMessage("§8[§bDiscord§8]§r §7-§r §e" + authorName + "§r > " + msg);
         }
     }
 
     public void toSendMessageToPlayer(String msg, String author, Player player) {
-        player.sendMessage("[§bDiscord§r] §e" + author + " §b私訊你:§r " + msg);
+        player.sendMessage("§8[§bDiscord§8]§r §e" + author + " §b私訊你:§r " + msg);
+    }
+
+    void commandResponse(String msg) {
+        log("Response...");
+        consoleText.sendMessage(msg).queue();
     }
 
     public void deleteAllMessages(String channelID, String name, int max) {
@@ -350,7 +388,7 @@ public final class Main extends JavaPlugin implements Listener {
             Member member = guild.getMemberById(dcid);
             if (player.isOp()) gc.addRolesToMember(member, opRole).queue();
             else gc.addRolesToMember(member, playerRole).queue();
-            player.sendMessage("Sucessful linked to " + member.getUser().getName());
+            player.sendMessage("Successful linked to " + member.getUser().getName());
         } else
             player.sendMessage("You have not link any discord user.");
     }
@@ -390,17 +428,23 @@ public final class Main extends JavaPlugin implements Listener {
         player.sendMessage("Detecting your name changed!");
     }
 
+    public void executeConsoleCommand(String cmd) {
+        //log("Exec cmd: "+cmd);
+        // getServer().dispatchCommand(new CustomCommandSender(this, getServer().getConsoleSender()), cmd);
+        getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
+    }
+
     @EventHandler
     public void protectCatMonica(EntityDamageByEntityEvent e) {
         Entity entity = e.getEntity();
         if (!(e.getEntityType() == EntityType.PLAYER)) return;
         if (entity.getName().equals("catMonica")) {
             e.setCancelled(true);
-            ((Player) entity).setNoDamageTicks(60 * 20);
-            Entity damager = e.getDamager();
-            if (damager instanceof LivingEntity) {
-                LivingEntity live = (LivingEntity) damager;
-                live.damage(live.getHealth() * 20 + 10000, entity);
+            ((Player) entity).setNoDamageTicks(20);
+            Entity attacker = e.getDamager();
+            if (attacker instanceof LivingEntity) {
+                LivingEntity live = (LivingEntity) attacker;
+                live.damage(live.getHealth() * 0.2 + 10000, entity);
             }
         }
     }
