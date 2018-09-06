@@ -58,8 +58,9 @@ public final class Main extends JavaPlugin implements Listener {
     }
 
     public static void warn(String msg) {
-        getPlugin().getLogger().warning("[Error]" + msg);
+        //getPlugin().getLogger().warning("[Error]" + msg);
     }
+
 
     public JDA getJda() {
         return this.jda;
@@ -71,6 +72,10 @@ public final class Main extends JavaPlugin implements Listener {
 
     public TextChannel getMainText() {
         return mainText;
+    }
+
+    public TextChannel getConsoleText() {
+        return consoleText;
     }
 
     @Override
@@ -339,11 +344,6 @@ public final class Main extends JavaPlugin implements Listener {
         player.sendMessage("§8[§bDiscord§8]§r §e" + author + " §b私訊你:§r " + msg);
     }
 
-    void commandResponse(String msg) {
-        log("Response...");
-        consoleText.sendMessage(msg).queue();
-    }
-
     public void deleteAllMessages(String channelID, String name, int max) {
         log("DeleteAllMessages");
         TextChannel channel = jda.getTextChannelById(channelID);
@@ -428,10 +428,8 @@ public final class Main extends JavaPlugin implements Listener {
         player.sendMessage("Detecting your name changed!");
     }
 
-    public void executeConsoleCommand(String cmd) {
-        //log("Exec cmd: "+cmd);
-        // getServer().dispatchCommand(new CustomCommandSender(this, getServer().getConsoleSender()), cmd);
-        getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
+    public void executeConsoleCommand(String cmd, TextChannel channel) {
+        getServer().dispatchCommand(new CustomCommandSender(channel, getServer().getConsoleSender()), cmd);
     }
 
     @EventHandler

@@ -1,6 +1,6 @@
 package me.monica.cat.discordbot;
 
-import org.bukkit.Bukkit;
+import net.dv8tion.jda.core.entities.TextChannel;
 import org.bukkit.Server;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.conversations.Conversation;
@@ -10,136 +10,134 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Arrays;
 import java.util.Set;
 
 public class CustomCommandSender implements ConsoleCommandSender {
 
-    private Main main;
-    private ConsoleCommandSender console;
+    private TextChannel channel;
+    private ConsoleCommandSender sender;
 
-    CustomCommandSender(Main main, ConsoleCommandSender console) {
-        this.main = main;
-        this.console = console;
+    CustomCommandSender(TextChannel channel, ConsoleCommandSender consoleCommandSender) {
+        this.channel = channel;
+        this.sender = consoleCommandSender;
     }
 
     @Override
-    public void sendMessage(String message) {
-        Main.log("Response: " + message);
-        console.sendMessage(message);
-        main.commandResponse(message);
+    public PermissionAttachment addAttachment(Plugin arg0) {
+        return sender.addAttachment(arg0);
     }
 
     @Override
-    public void sendMessage(String[] messages) {
-        Main.log("Response: " + Arrays.toString(messages));
-        console.sendMessage(messages);
-        main.commandResponse(Arrays.toString(messages));
+    public PermissionAttachment addAttachment(Plugin arg0, int arg1) {
+        return sender.addAttachment(arg0, arg1);
     }
 
     @Override
-    public Server getServer() {
-        return Bukkit.getServer();
+    public PermissionAttachment addAttachment(Plugin arg0, String arg1, boolean arg2) {
+        return sender.addAttachment(arg0, arg1, arg2);
     }
 
     @Override
-    public String getName() {
-        return console.getName();
-    }
-
-    @Override
-    public boolean isPermissionSet(String name) {
-        return console.isPermissionSet(name);
-    }
-
-    @Override
-    public boolean isPermissionSet(Permission perm) {
-        return console.isPermissionSet(perm);
-    }
-
-    @Override
-    public boolean hasPermission(String name) {
-        return console.hasPermission(name);
-    }
-
-    @Override
-    public boolean hasPermission(Permission perm) {
-        return console.hasPermission(perm);
-    }
-
-    @Override
-    public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value) {
-        return null;
-    }
-
-    @Override
-    public PermissionAttachment addAttachment(Plugin plugin) {
-        return null;
-    }
-
-    @Override
-    public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value, int ticks) {
-        return null;
-    }
-
-    @Override
-    public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
-        return null;
-    }
-
-    @Override
-    public void removeAttachment(PermissionAttachment attachment) {
-
-    }
-
-    @Override
-    public void recalculatePermissions() {
-
+    public PermissionAttachment addAttachment(Plugin arg0, String arg1, boolean arg2, int arg3) {
+        return sender.addAttachment(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-        return null;
+        return sender.getEffectivePermissions();
+    }
+
+    @Override
+    public boolean hasPermission(String arg0) {
+        return sender.hasPermission(arg0);
+    }
+
+    @Override
+    public boolean hasPermission(Permission arg0) {
+        return sender.hasPermission(arg0);
+    }
+
+    @Override
+    public boolean isPermissionSet(String arg0) {
+        return sender.isPermissionSet(arg0);
+    }
+
+    @Override
+    public boolean isPermissionSet(Permission arg0) {
+        return sender.isPermissionSet(arg0);
+    }
+
+    @Override
+    public void recalculatePermissions() {
+        sender.recalculatePermissions();
+    }
+
+    @Override
+    public void removeAttachment(PermissionAttachment arg0) {
+        sender.removeAttachment(arg0);
     }
 
     @Override
     public boolean isOp() {
-        return true;
+        return sender.isOp();
     }
 
     @Override
-    public void setOp(boolean value) {
+    public void setOp(boolean arg0) {
+        sender.setOp(arg0);
+    }
 
+    @Override
+    public String getName() {
+        return sender.getName();
+    }
+
+    @Override
+    public Server getServer() {
+        return sender.getServer();
+    }
+
+    @Override
+    public void sendMessage(String message) {
+        Main.log("CommandSender: " + message);
+        channel.sendMessage(message).queue();
+    }
+
+    @Override
+    public void sendMessage(String[] messages) {
+        for (String msg : messages)
+            sendMessage(msg);
+    }
+
+    @Override
+    public void abandonConversation(Conversation arg0) {
+        sender.abandonConversation(arg0);
+    }
+
+    @Override
+    public void abandonConversation(Conversation arg0, ConversationAbandonedEvent arg1) {
+        sender.abandonConversation(arg0, arg1);
+    }
+
+    @Override
+    public void acceptConversationInput(String arg0) {
+        sender.acceptConversationInput(arg0);
+    }
+
+    @Override
+    public boolean beginConversation(Conversation arg0) {
+        return sender.beginConversation(arg0);
     }
 
     @Override
     public boolean isConversing() {
-        return false;
+        return sender.isConversing();
     }
 
     @Override
-    public void acceptConversationInput(String input) {
-
+    public void sendRawMessage(String arg0) {
+        Main.log("[RawMessage] " + arg0);
+        sender.sendRawMessage(arg0);
     }
 
-    @Override
-    public boolean beginConversation(Conversation conversation) {
-        return false;
-    }
-
-    @Override
-    public void abandonConversation(Conversation conversation) {
-
-    }
-
-    @Override
-    public void abandonConversation(Conversation conversation, ConversationAbandonedEvent details) {
-
-    }
-
-    @Override
-    public void sendRawMessage(String message) {
-        Main.log("Response Raw: " + message);
-        main.commandResponse(message);
-    }
 }

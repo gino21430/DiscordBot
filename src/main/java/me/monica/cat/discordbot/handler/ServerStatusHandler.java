@@ -2,6 +2,7 @@ package me.monica.cat.discordbot.handler;
 
 import com.sun.management.OperatingSystemMXBean;
 import me.monica.cat.discordbot.Main;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -9,9 +10,7 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 
 import java.lang.management.ManagementFactory;
 import java.text.DecimalFormat;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getServer;
@@ -35,6 +34,19 @@ public class ServerStatusHandler extends Thread {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
+                int skip = 0;
+                List<Message> toDel = new ArrayList<>();
+                for (Message msg : channel.getIterableHistory()) {
+                    if (skip >= 3) {
+                        toDel.add(msg);
+                        if (toDel.size() == 99) break;
+                    }
+                    skip++;
+                }
+                try {
+                    channel.deleteMessages(toDel).queue();
+                } catch (IllegalArgumentException ignored) {
+                }
                 channel.sendMessage(getData()).queue();
             }
         };
@@ -108,7 +120,7 @@ public class ServerStatusHandler extends Thread {
                 "TPS : " + tps + "\n" +
                 "Online Players : " + players + "\n" +
                 " - Players: " + playerAmount + "\n" +
-                " - OPs: " + opAmount + "\n";
+                " - OPs: " + opAmount + "\n\n";
     }
 
 }

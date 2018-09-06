@@ -3,10 +3,7 @@ package me.monica.cat.discordbot.handler;
 import me.monica.cat.discordbot.Main;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.PrivateChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.entities.*;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -29,6 +26,12 @@ public class DiscordMessageHandler {
     public void handleGuildMessage(Message message) {
         User author = message.getAuthor();
         if (author == Main.getPlugin().jda.getSelfUser() || author == null) return;
+        if (message.getChannel() == Main.getPlugin().getConsoleText()) {
+            String msg = message.getContentStripped();
+            if (!msg.startsWith("!cmd ")) return;
+            Main.log("[DiscordConsole] execute: " + msg);
+            Main.getPlugin().executeConsoleCommand(message.getContentStripped().substring(5), (TextChannel) message.getChannel());
+        }
         if (message.getChannel() != main.getMainText()) return;
         String authorName = main.linkedUser.getString(author.getId());
         if (authorName == null) {
@@ -139,7 +142,7 @@ public class DiscordMessageHandler {
                         tmpStr.append(args[i]);
                         if (i + 1 < args.length) tmpStr.append(" ");
                     }
-                    main.executeConsoleCommand(tmpStr.toString());
+                    main.executeConsoleCommand(tmpStr.toString(), (TextChannel) channel);
                     return;
                 }
             default:
