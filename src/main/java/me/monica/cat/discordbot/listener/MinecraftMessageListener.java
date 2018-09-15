@@ -14,8 +14,9 @@ import java.io.File;
 
 public class MinecraftMessageListener implements Listener {
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
+        if (e.isCancelled()) return;
         String messsge = e.getMessage();
         MinecraftMessageHandler minecraftMessageHandler = new MinecraftMessageHandler();
         File file = new File(Main.getPlugin().getDataFolder().getParentFile().getPath() + "\\players\\" + e.getPlayer().getName() + ".yml");

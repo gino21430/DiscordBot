@@ -3,7 +3,6 @@ package me.monica.cat.discordbot.handler;
 import me.monica.cat.discordbot.Main;
 import me.monica.cat.discordbot.util.ConfigUtil;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -35,69 +34,13 @@ public class MinecraftMessageHandler {
     }
 
     public void handle(Player player, String msg) {
-        if (msg.startsWith("@") || msg.startsWith("#") || msg.startsWith("$")) return;
-        String prefix = handlePrefix(player);
-        ItemStack item = player.getInventory().getItemInMainHand();
-
-        if (msg.toLowerCase().contains("[i]") && item.getType() != Material.AIR) {
-            StringBuilder tellraw = new StringBuilder();
-            tellraw.append("tellraw @a [");
-
-            String[] pure;
-
-            // 處理物品
-            if (msg.toLowerCase().equals("[i]")) {
-                tellraw.append(dealPureString(prefix)).append(",").append(dealItem(item));
-            } else {
-                if (msg.toLowerCase().endsWith("[i]")) msg += " ";
-                if (msg.toLowerCase().startsWith("[i]")) msg = " " + msg;
-
-                msg = translateAlternateColorCodes(msg);
-                if (isVip(player.getName()) && !player.isOp()) {
-                    Main.log("Player:" + player.getName() + ",msg:" + msg);
-                    msg = ChatColor.stripColor(msg);
-                }
-
-                pure = msg.split("\\[[iI]]");
-                tellraw.append(dealPureString(prefix)).append(",");
-                for (int i = 0, len = pure.length; i < len; i++) {
-                    Main.log("pure[" + i + "]: \"" + pure[i] + "\"");
-                    if (!pure[i].equals(" ")) {
-                        tellraw.append(dealPureString(pure[i]));
-                        if (i + 1 < len) { //後面還有咚咚
-                            tellraw.append(",").append(dealItem(item));
-                            if (!pure[i + 1].equals(" ")) //後面還有字串
-                                tellraw.append(",");
-                        }
-                    } else { //現在是" "
-                        if (i + 1 < len) { //是第一個，後面還有咚咚
-                            Main.log("pure[i+1]: \"" + pure[i + 1] + "\"");
-                            tellraw.append(dealItem(item));
-                            if (!pure[i + 1].equals(" ")) //後面還有字串
-                                tellraw.append(",");
-                        }
-                    }
-                }
-            }
-            tellraw.append("]");
-
-            Main.log("tellraw: " + tellraw.toString());
-            //getServer().dispatchCommand(getServer().getConsoleSender(), tellraw.toString());
-
-            String displayName;
-            if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
-                displayName = item.getType().toString();
-            else displayName = item.getItemMeta().getDisplayName();
-            msg = msg.replaceAll("\\[[i|I]]", "[" + displayName + "]");
-            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
-        } else { //一般對話
-            msg = translateAlternateColorCodes(msg);
-            if (isVip(player.getName()) && !player.isOp()) {
-                msg = ChatColor.stripColor(msg);
-            }
-            //Main.getPlugin().toBroadcastToMinecraft(prefix + msg);
-            if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
+        if (msg.contains("[公會]") || msg.contains("[隊伍聊天]") || msg.contains("[展示物品]")) return;
+        if (msg.contains("[管理員頻道]")) {
+            Main.getPlugin().toDiscordOPTextChannel(msg.replace("[管理員頻道]", ""));
+            return;
         }
+        String prefix = handlePrefix(player);
+        if (mc2dc) Main.getPlugin().toDiscordMainTextChannel(ChatColor.stripColor(prefix + msg));
     }
 
     private String dealPureString(String msg) {

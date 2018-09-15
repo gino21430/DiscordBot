@@ -32,6 +32,7 @@ import java.util.*;
 
 public final class Main extends JavaPlugin implements Listener {
 
+    private final OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(new File(getDataFolder(), "DiscordLog.txt")), StandardCharsets.UTF_8);
     public JDA jda;
     public FileConfiguration config;
     public Map<String, String> verify;
@@ -40,12 +41,12 @@ public final class Main extends JavaPlugin implements Listener {
     private GuildController gc;
     private TextChannel mainText;
     private TextChannel consoleText;
+    private TextChannel OPText;
     private FileConfiguration dcid2uuid;
     private FileConfiguration uuid2dcid;
-    private final OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(new File(getDataFolder(), "DiscordLog.txt")), StandardCharsets.UTF_8);
 
     public Main() throws FileNotFoundException {
-        Main.warn("File not found");
+        Main.log("File not found");
     }
 
 
@@ -56,11 +57,6 @@ public final class Main extends JavaPlugin implements Listener {
     public static void log(String msg) {
         getPlugin().getLogger().info(msg);
     }
-
-    public static void warn(String msg) {
-        //getPlugin().getLogger().warning("[Error]" + msg);
-    }
-
 
     public JDA getJda() {
         return this.jda;
@@ -126,8 +122,10 @@ public final class Main extends JavaPlugin implements Listener {
                         .addEventListener(new DiscordGuildMessageListener(writer))
                         .addEventListener(new DiscordPrivateMessageListener())
                         .buildBlocking(JDA.Status.CONNECTED);
+
                 mainText = jda.getTextChannelById(config.getString("Channel"));
                 consoleText = jda.getTextChannelById(config.getString("ConsoleChannel"));
+                OPText = jda.getTextChannelById(config.getString("OPChannel"));
                 guild = mainText.getGuild();
                 gc = new GuildController(guild);
                 mainText.sendMessage(":white_check_mark: Bot was started").queue();
@@ -332,6 +330,12 @@ public final class Main extends JavaPlugin implements Listener {
         if (jda == null || jda.getStatus() == JDA.Status.SHUTTING_DOWN || jda.getStatus() == JDA.Status.SHUTDOWN)
             return;
         mainText.sendMessage(msg).queue();
+    }
+
+    public void toDiscordOPTextChannel(String msg) {
+        if (jda == null || jda.getStatus() == JDA.Status.SHUTTING_DOWN || jda.getStatus() == JDA.Status.SHUTDOWN)
+            return;
+        OPText.sendMessage(msg).queue();
     }
 
     public void toSendMessageToMultiPlayers(String authorName, String msg, List<String> uuids) {

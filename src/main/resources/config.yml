@@ -1,7 +1,7 @@
 Token: " "
 Channel: " "
 StatusChannel: " "
+ConsoleChannel: " "
 PlayerRole: " "
 OPRole: " "
 UpdatePeriod: 60
-Save: false

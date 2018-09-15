@@ -36,15 +36,16 @@ public class DiscordMessageHandler {
         String authorName = main.linkedUser.getString(author.getId());
         if (authorName == null) {
             MessageBuilder messageBuilder = new MessageBuilder();
-            messageBuilder.append(author).append(" 您未綁定Minecraft帳號呦");
+            messageBuilder.append(author).append(" 您未綁定本服Minecraft帳號呦");
             Main.getPlugin().toDiscordMainTextChannel(messageBuilder.build());
+            return;
         }
         if (dc2mc)
             Main.getPlugin().toSendMessageToMultiPlayers(authorName, ChatColor.stripColor(message.getContentStripped()), uuids);
     }
 
     public void handlePrivateMessage(Message message, User author, PrivateChannel channel) {
-        String msg = message.getContentRaw();
+        String msg = message.getContentStripped();
         Member member = Main.getPlugin().getGuild().getMember(author);
         if (!msg.startsWith("!")) return;
         Main.log(author.getName() + "'s PM: " + msg);

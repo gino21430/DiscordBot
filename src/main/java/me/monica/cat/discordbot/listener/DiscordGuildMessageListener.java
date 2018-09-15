@@ -23,9 +23,9 @@ public class DiscordGuildMessageListener extends ListenerAdapter {
         DiscordMessageHandler discordMessageHandler = new DiscordMessageHandler();
         discordMessageHandler.handleGuildMessage(e.getMessage());
         try {
-            writer.write(e.getMessage().getContentRaw());
+            writer.append(e.getMessage().getContentStripped()).append("\n");
         } catch (IOException e1) {
-            Main.warn("Error while write DiscordLog!");
+            Main.log("Error while write DiscordLog!");
         }
     }
 }
